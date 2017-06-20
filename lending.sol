@@ -1,12 +1,16 @@
+import "github.com/Arachnid/solidity-stringutils/strings.sol";
+
 pragma solidity ^0.4.11;
 
 // time is always in seconds
 // money is always in wei
 contract Lending {
+    using strings for *;
     address owner;
 
     // lending policy 
     struct Policy {
+        string name;
         uint[2] idRange;
         uint maxTimeFrame;
         uint lendingFee;
@@ -17,62 +21,84 @@ contract Lending {
         bool relendingAllowed;
     }
 
-    mapping(string => Policy) policies;
+    Policy[] policies;
    
     struct LendItem {
-        string policyId;
-        uint timeFrame;
-        bool valid;
+        address lender;
+        uint policyId;
+        uint lendEnd;
+        bool confirmed;
     }
 
-    mapping(address => mapping(uint => LendItem)) lendeesWithItems;
+    LendItem[] lendItems;
 
-    function newPolicy(string name, Policy policy) {
+    function newPolicy(string name, uint idStart, uint idEnd, uint maxTimeFrame,
+                       uint lendingFee, uint depositAmount,
+                       uint overdueTickMoneyRate, uint overdueTickTimeRate,
+                       uint maxOverdue, bool relendingAllowed) {
         if (msg.sender == owner) {
-            policies[name] = policy;
+            uint[2] memory idRange;
+            idRange[0] = idStart;
+            idRange[1] = idEnd;
+            policies.push(Policy(name, idRange, maxTimeFrame, lendingFee,
+                                 depositAmount, overdueTickMoneyRate,
+                                 overdueTickTimeRate, maxOverdue, 
+                                 relendingAllowed));
         }
     }
 
-    function registerLendee() {
-        // if lendee is not registered
-        if (lendeesWithItems[msg.sender] == address(0x0)) {
-            lendeesWithItems[msg.sender] = mapping(uint => LendItem);
-        }
-    }
-
-    function lendRequest(uint itemId, uint timeFrame, string policy) payable {
-        // if lendee is not registered
-        if (lendeesWithItems[msg.sender] != address(0x0)) {
-            if (policies[policy] != address(0x0)) {
-                if (policies[policy].idRange[0] <= itemId 
-                    <= policies[policy].idRange[1]
-                   && timeFrame < policies[policy].maxTimeFrame) {
-                    lendeesWithItems[msg.sender][itemId] 
-                        = LendItem(policy, timeFrame, false);
-                }
+    function getPolicy(string pName) constant returns (uint) {
+        for(uint i = 0; i<policies.length; i++) {
+            if (strings.equals(policies[i].name.toSlice(), pName.toSlice())) {
+                return i;
             }
         }
+        // throw if not found
+        throw;
     }
 
-    function lendConfirm(address lendee, uint itemId) {
-        if (msg.sender == owner) {
-            // if lendee is not registered
-            if (lendeesWithItems[lendee] != address(0x0)) {
-                if (lendeesWithItems[lendee][itemId] != address(0x0) {
-                    lendeesWithItems[lendee][itemId].valid = true;
-                }
-            }
+    function lendRequest(uint itemId, uint timeFrame, uint policyId) payable {
+        if (policies[policyId].idRange[0] <= itemId
+            && itemId <= policies[policyId].idRange[1]
+            && timeFrame < policies[policyId].maxTimeFrame) {
+               // TODO check payed money
+            lendItems.push(
+                LendItem(msg.sender, policyId, block.timestamp + timeFrame,
+                         false));
         }
     }
 
-    function lendComplete(address lendee, uint itemId) {
-        if (msg.sender == owner) {
-            // if lendee is not registered
-            if (lendeesWithItems[lendee] != address(0x0)) {
-                if (lendeesWithItems[lendee][itemId] != address(0x0) {
-                    lendeesWithItems[lendee].pop(itemId);
-                }
+    function getUnconfirmedLendItems() internal returns (LendItem[]) {
+        LendItem[] memory ret;
+        for (uint i = 0; i<lendItems.length; i++) {
+            if (lendItems[i].confirmed == false) {
+                ret[i] = lendItems[i];
             }
+        }
+        return ret;
+    }
+
+    function lendConfirm(uint lendRequestId) {
+        if (msg.sender == owner) {
+            lendItems[lendRequestId].confirmed = true;
+        }
+    }
+
+    function getConfirmedLendItems() internal returns (LendItem[]) {
+        LendItem[] memory ret;
+        for (uint i = 0; i<lendItems.length; i++) {
+            if (lendItems[i].confirmed == true) {
+                ret[i] = lendItems[i];
+            }
+        }
+        return ret;
+    }
+
+    function lendComplete(uint lendRequestId) {
+        if (msg.sender == owner) {
+            // TODO pay remainig money back
+            lendItems[lendRequestId] = lendItems[lendItems.length];
+            lendItems.length--;
         }
     }
 
