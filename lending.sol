@@ -1,12 +1,14 @@
-import "github.com/Arachnid/solidity-stringutils/strings.sol";
-
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.6;
 
 // time is always in seconds
 // money is always in wei
 contract Lending {
     using strings for *;
     address owner;
+
+    function Lending () {
+        owner = msg.sender;
+    }
 
     // lending policy 
     struct Policy {
