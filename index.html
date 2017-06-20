@@ -11,16 +11,44 @@
     <div class="container">
         <h1><i>&fnof;</i>lending - A decentralized lending app</h1>
                 <ul class="nav nav-tabs">
-                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#borrow">Borrow</a>
+                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#lend">Verleihen</a>
                     </li>
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#lend">Lend</a>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#borrow">Leihen</a>
                     </li>
                 </ul>
                 <div class="tab-content">
-                    <div class="tab-pane active" id="borrow">
-                        <h2>asdf</h2>
+                    <div class="tab-pane active" id="lend">
+                        <div class="container">
+                            <h2>Neue Policy</h2>
+                        <form>
+                            <div class="form-group">
+                                <label for="name">Name der neuen Policy:</label>
+                                <input type="text" class="form-control" id="name" placeholder="Name">
+                                <label for="idStart">Gültige IDs Anfang:</label>
+                                <input type="number" class="form-control" id="idStart" placeholder="id" min="0">
+                                <label for="idEnd">Gültige IDs Ende:</label>
+                                <input type="number" class="form-control" id="idEnd" placeholder="id" min="0">
+                                <label for="maxTimeFrame">Maximaler Zeitraum:</label>
+                                <input type="number" class="form-control" id="maxTimeFrame" placeholder="Zeitraum in Sekunden" min="0">
+                                <label for="depositAmount">Pfand:</label>
+                                <input type="number" class="form-control" id="depositAmount" placeholder="Pfand in wei" min="0">
+                                <label for="overdueTickMoneyRate">Überziehungsgebühr (Geld):</label>
+                                <input type="number" class="form-control" id="overdueTickMoneyRate" placeholder="Überziehungsgebühr in wei" min="0">
+                                <label for="overdueTickTimeRate">Überziehungsgebühr (Zeit):</label>
+                                <input type="number" class="form-control" id="overdueTickTimeRate" placeholder="Überziehungsgebühr in Sekunden" min="0">
+                                <label for="maxOverdue">Maximale Überziehungsgebühr:</label>
+                                <input type="number" class="form-control" id="maxOverdue" placeholder="Überziehungsgebühr in wei" min="0">
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                    <input type="checkbox" class="form-check-input" id="relendingAllowed">
+                                    Weiterverleihen erlaubt
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                        </div>
                     </div>
-                    <div class="tab-pane" id="lend">
+                    <div class="tab-pane" id="borrow">
                         <h2>aaasdf</h2>
                     </div>
                 </div>
