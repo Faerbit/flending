@@ -32,7 +32,7 @@ contract Lending {
         bool confirmed;
     }
 
-    LendItem[] lendItems;
+    LendItem[] public lendItems;
 
     function newPolicy(string name, uint idStart, uint idEnd, uint maxTimeFrame,
                        uint lendingFee, uint depositAmount,
@@ -70,7 +70,7 @@ contract Lending {
         }
     }
 
-    function getUnconfirmedLendItems() internal returns (LendItem[]) {
+    function getUnconfirmedLendItems() constant internal returns (LendItem[]) {
         LendItem[] memory ret;
         for (uint i = 0; i<lendItems.length; i++) {
             if (lendItems[i].confirmed == false) {
@@ -86,7 +86,7 @@ contract Lending {
         }
     }
 
-    function getConfirmedLendItems() internal returns (LendItem[]) {
+    function getConfirmedLendItems() constant internal returns (LendItem[]) {
         LendItem[] memory ret;
         for (uint i = 0; i<lendItems.length; i++) {
             if (lendItems[i].confirmed == true) {
@@ -99,7 +99,7 @@ contract Lending {
     function lendComplete(uint lendRequestId) {
         if (msg.sender == owner) {
             // TODO pay remainig money back
-            lendItems[lendRequestId] = lendItems[lendItems.length];
+            //lendItems[lendRequestId] = lendItems[lendItems.length];
             lendItems.length--;
         }
     }
