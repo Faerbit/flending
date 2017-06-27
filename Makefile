@@ -1,3 +1,8 @@
 all:
-	cat strings.sol lending.sol > build/compiled.sol
-	browserify -t brfs flending.js -o build/flending-compiled.js
+	truffle compile
+	truffle migrate
+	mkdir -p build/out
+	cp frontend/index.html build/out
+	cp frontend/flending.css build/out
+	browserify frontend/flending.js -o build/out/flending-compiled.js
+	swarm --recursive up build/out

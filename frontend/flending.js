@@ -1,4 +1,4 @@
-
+"use strict";
 function submitNewPolicy(event) {
     event.preventDefault();
     var par = {};
@@ -171,7 +171,7 @@ function refreshConfirmedBorrow(event) {
     });
 }
 
-function init(web3Instance, contractInstance) {
+/*function init(web3Instance, contractInstance) {
     $("#newPolicy :submit").prop("disabled", false);
     var context = { web3: web3Instance, contract: contractInstance};
     $("#newPolicy").submit(submitNewPolicy.bind(context));
@@ -183,10 +183,10 @@ function init(web3Instance, contractInstance) {
     $("#refreshComplete").on("click", refreshConfirmed.bind(context));
     $("#refreshCompleteBorrow").prop("disabled", false);
     $("#refreshCompleteBorrow").on("click", refreshConfirmedBorrow.bind(context));
-}
+}*/
 
 function compile() {
-    var Web3 = require("web3");
+    /*var Web3 = require("web3");
 
     var web3 = new Web3(new Web3.providers.HttpProvider(
         "http://localhost:8545"));
@@ -218,16 +218,109 @@ function compile() {
                         }
                 });
         }
+    });*/
+}
+
+var db;
+
+function parseForm(event) {
+    var par = {};
+    $.each($(event.target).serializeArray(), function(_, kv) {
+        par[kv.name] = kv.value;
+    });
+    var valid = true;
+    $.each(par, function(key, value) {
+        if (value == "")  {
+            return (valid = false);
+        }
+    });
+    if (valid) {
+        return par;
+    }
+    else {
+        return false;
+    }
+}
+
+function createNewDatabase() {
+    var sql = require("sql.js");
+    db = new sql.Database();
+
+    var stmt = "create table categories(name text);"
+    stmt += "create table items(category integer, name text, foreign key(category) references categories(rowid));"
+    db.run(stmt);
+    console.log("Created new database.");
+}
+
+
+function refresh() {
+    $("#categories").html("");
+    $("#categories").append("<tr><td>1</td><td>stuff</td></tr>");
+    $("#categories").append("<tr><td>2</td><td>other stuff</td></tr>");
+    console.log("Refreshed!");
+}
+
+function refreshLocal() {
+    $("#categories").html("");
+    var categories = db.exec("select * from categories");
+    var vals = categories[0]["values"];
+    console.log(vals);
+    $.each(vals, function( key, val) {
+        $("#categories").append("<tr><td>" + key + "</td><td>" + val + "</td>/tr>");
     });
 }
 
+function newCategory(event) {
+    event.preventDefault();
+    var par;
+    if ((par = parseForm(event)) == false) {
+        alert("Alle Felder müssen ausgefüllt werden!");
+        return;
+    }
+    else {
+        db.run("insert into categories values(:name)", {":name": par["name"]});
+        refreshLocal();
+    }
+}
+
+function init(dbAddress) {
+    if (parseInt(dbAddress, 16) === 0) {
+        createNewDatabase();
+    }
+    $("#newCategory :submit").prop("disabled", false);
+    $("#newCategory").submit(newCategory);
+}
+
 $(document).ready(function() {
-    $("#newPolicy :submit").prop("disabled", true);
+    /*$("#newPolicy :submit").prop("disabled", true);
     $("#newLendRequest :submit").prop("disabled", true);
     $("#refreshUnconfirmed").prop("disabled", true);
     $("#refreshComplete").prop("disabled", true);
     $("#refreshCompleteBorrow").prop("disabled", true);
     $("#confirm").prop("disabled", true);
     $("#complete").prop("disabled", true);
-    compile(); 
+    compile(); */
+
+    $("#newCategory :submit").prop("disabled", true);
+
+    var Web3 = require("web3");
+    if (typeof web3 !== "undefined") {
+        window.web3 = new Web3(web3.currentProvider);
+    }
+    else {
+        alert("No web3 provider found. App unable to function!");
+        return;
+    }
+    var contractJson = require("../build/contracts/Lending.json");
+    var contract = require("truffle-contract");
+    var Lending = contract(contractJson);
+    Lending.setProvider(web3.currentProvider);
+    Lending.deployed().then(function(deployed) {
+        deployed.getCurrentDb().then(function(dbAddress) {
+            console.log("DB address: " + dbAddress);
+            init(dbAddress);
+        });
+    });
+    refresh();
+    refresh();
 });

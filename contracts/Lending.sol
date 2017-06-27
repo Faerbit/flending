@@ -1,5 +1,7 @@
 pragma solidity ^0.4.6;
 
+import "./strings.sol";
+
 // time is always in seconds
 // money is always in wei
 contract Lending {
@@ -102,6 +104,19 @@ contract Lending {
             //lendItems[lendRequestId] = lendItems[lendItems.length];
             lendItems.length--;
         }
+    }
+
+    // swarm address to current item sqlite db file
+    address currentDb;
+
+    function setCurrentDb(address val) {
+        if (msg.sender == owner) {
+            currentDb = val;
+        }
+    }
+
+    function getCurrentDb() constant returns (address) {
+        return currentDb;
     }
 
 
