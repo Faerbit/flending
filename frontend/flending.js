@@ -253,11 +253,8 @@ function createNewDatabase() {
 }
 
 
-function refresh() {
-    $("#categories").html("");
-    $("#categories").append("<tr><td>1</td><td>stuff</td></tr>");
-    $("#categories").append("<tr><td>2</td><td>other stuff</td></tr>");
-    console.log("Refreshed!");
+function refreshDb() {
+    refreshLocal();
 }
 
 function refreshLocal() {
@@ -309,14 +306,37 @@ function newItem(event) {
     }
 }
 
-function init(dbAddress) {
-    if (parseInt(dbAddress, 16) === 0) {
+function saveDb(event) {
+    $("saveDb").prop("disabled", true);
+    const swarm = require("swarm-js").at("http://localhost:8500");
+    console.log(db.export());
+    swarm.upload(new Buffer(db.export())).then(hash => {
+        console.log(hash);
+        this.contract.setCurrentDb(hash, {from: web3.eth.accounts[0], gas: parseInt("0x7000000", 16)}).then(result => {
+            console.log(result);
+        });
+    });
+}
+
+function init(dbAddress, contract) {
+    if (dbAddress === "") {
         createNewDatabase();
+    }
+    else {
+        const swarm = require("swarm-js").at("http://localhost:8500");
+        var sql = require("sql.js");
+        console.log(typeof dbAddress);
+        swarm.download(dbAddress).then(buffer => {
+            db = sql.Database(buffer);
+            refreshDb();
+        });
     }
     $("#newCategory :submit").prop("disabled", false);
     $("#newCategory").submit(newCategory);
     $("#newItem :submit").prop("disabled", false);
     $("#newItem").submit(newItem);
+    var context = { contract: contract };
+    $("#saveDb").on("click", saveDb.bind(context));
 }
 
 $(document).ready(function() {
@@ -335,7 +355,10 @@ $(document).ready(function() {
 
     var Web3 = require("web3");
     if (typeof web3 !== "undefined") {
+        console.log(web3.currentProvider);
         window.web3 = new Web3(web3.currentProvider);
+        /*window.web3.eth.defaultAccount = window.web3.eth.accounts[0]; 
+        web3.eth.defaultAccount = web3.eth.accounts[0];*/
     }
     else {
         alert("No web3 provider found. App unable to function!");
@@ -348,9 +371,7 @@ $(document).ready(function() {
     Lending.deployed().then(function(deployed) {
         deployed.getCurrentDb().then(function(dbAddress) {
             console.log("DB address: " + dbAddress);
-            init(dbAddress);
+            init(dbAddress, deployed);
         });
     });
-    refresh();
-    refresh();
 });

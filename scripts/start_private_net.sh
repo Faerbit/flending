@@ -53,6 +53,7 @@ nohup geth --datadir $DATADIR \
     --mine \
     --minerthreads 1 \
     --rpc \
+    --rpccorsdomain "*" \
     2>> $DATADIR/geth.log &
 
 echo "geth is running in the background, you can check its logs at "$DATADIR"/geth.log"
@@ -74,6 +75,7 @@ mist \
     --rpc $DATADIR/geth.ipc \
     --node-datadir $DATADIR \
     --node-networkid 322 \
+    --node-rpccorsdomain "*" \
     --node-nodiscover \
     --node-maxpeers 0
 

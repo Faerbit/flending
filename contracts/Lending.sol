@@ -107,15 +107,15 @@ contract Lending {
     }
 
     // swarm address to current item sqlite db file
-    address currentDb;
+    string currentDb;
 
-    function setCurrentDb(address val) {
+    function setCurrentDb(string val) {
         if (msg.sender == owner) {
             currentDb = val;
         }
     }
 
-    function getCurrentDb() constant returns (address) {
+    function getCurrentDb() constant returns (string) {
         return currentDb;
     }
 
