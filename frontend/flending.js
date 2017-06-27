@@ -246,8 +246,8 @@ function createNewDatabase() {
     var sql = require("sql.js");
     db = new sql.Database();
 
-    var stmt = "create table categories(name text);"
-    stmt += "create table items(category integer, name text, foreign key(category) references categories(rowid));"
+    var stmt = "create table categories(name text unique);"
+    stmt += "create table items(category text, name text);"
     db.run(stmt);
     console.log("Created new database.");
 }
@@ -262,12 +262,23 @@ function refresh() {
 
 function refreshLocal() {
     $("#categories").html("");
-    var categories = db.exec("select * from categories");
-    var vals = categories[0]["values"];
-    console.log(vals);
-    $.each(vals, function( key, val) {
-        $("#categories").append("<tr><td>" + key + "</td><td>" + val + "</td>/tr>");
-    });
+    $("#items").html("");
+    $("#newItemSelect").html("");
+    var res = db.exec("select * from categories");
+    if (res.length > 0) {
+        var vals = res[0]["values"];
+        $.each(vals, function( key, val) {
+            $("#categories").append("<tr><td>" + key + "</td><td>" + val + "</td>/tr>");
+            $("#newItemSelect").append("<option>" + val + "</option>");
+        });
+    }
+    res = db.exec("select * from items");
+    if (res.length > 0) {
+        var vals = res[0]["values"];
+        $.each(vals, function( key, val) {
+            $("#items").append("<tr><td>" + key + "</td><td>" + val[0] + "</td><td>" + val[1] + "</td>/tr>");
+        });
+    }
 }
 
 function newCategory(event) {
@@ -280,6 +291,21 @@ function newCategory(event) {
     else {
         db.run("insert into categories values(:name)", {":name": par["name"]});
         refreshLocal();
+        $("#saveDb").prop("disabled", false);
+    }
+}
+
+function newItem(event) {
+    event.preventDefault();
+    var par;
+    if ((par = parseForm(event)) == false) {
+        alert("Alle Felder müssen ausgefüllt werden!");
+        return;
+    }
+    else {
+        db.run("insert into items values(:category, :name)", {":category": par["category"], ":name": par["name"]});
+        refreshLocal();
+        $("#saveDb").prop("disabled", false);
     }
 }
 
@@ -289,6 +315,8 @@ function init(dbAddress) {
     }
     $("#newCategory :submit").prop("disabled", false);
     $("#newCategory").submit(newCategory);
+    $("#newItem :submit").prop("disabled", false);
+    $("#newItem").submit(newItem);
 }
 
 $(document).ready(function() {
@@ -302,6 +330,8 @@ $(document).ready(function() {
     compile(); */
 
     $("#newCategory :submit").prop("disabled", true);
+    $("#newItem :submit").prop("disabled", true);
+    $("#saveDb").prop("disabled", true);
 
     var Web3 = require("web3");
     if (typeof web3 !== "undefined") {
