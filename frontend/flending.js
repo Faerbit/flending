@@ -312,8 +312,12 @@ function saveDb(event) {
     console.log(db.export());
     swarm.upload(new Buffer(db.export())).then(hash => {
         console.log(hash);
-        this.contract.setCurrentDb(hash, {from: web3.eth.accounts[0], gas: parseInt("0x7000000", 16)}).then(result => {
-            console.log(result);
+        web3.eth.estimateGas(this.contract.setCurrentDb.call(hash), estGas => {
+            console.log(estGas);
+            this.contract.setCurrentDb(hash, {from: web3.eth.accounts[0], gas: estGas }).then(result => {
+                console.log(result);
+                refreshDb();
+            });
         });
     });
 }
@@ -327,8 +331,11 @@ function init(dbAddress, contract) {
         var sql = require("sql.js");
         console.log(typeof dbAddress);
         swarm.download(dbAddress).then(buffer => {
-            db = sql.Database(buffer);
+            db = new sql.Database(buffer);
             refreshDb();
+        },
+        error => {
+            console.error(error);
         });
     }
     $("#newCategory :submit").prop("disabled", false);
