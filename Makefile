@@ -1,3 +1,5 @@
+export PATH := $(shell npm bin):$(PATH)
+
 all:
 	truffle compile
 	truffle migrate
