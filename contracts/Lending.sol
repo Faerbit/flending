@@ -15,9 +15,10 @@ contract Lending {
     // lending policy 
     struct Policy {
         string name;
-        uint[2] idRange;
+        string category;
         uint maxTimeFrame;
-        uint lendingFee;
+        uint lendingFee; // wei per Second
+        uint minLendingFee;
         uint depositAmount;
         uint overdueTickMoneyRate;
         uint overdueTickTimeRate;
@@ -25,29 +26,27 @@ contract Lending {
         bool relendingAllowed;
     }
 
-    Policy[] policies;
+    Policy[] public policies;
    
     struct LendItem {
-        address lender;
+        uint itemId;
         uint policyId;
+        address lender;
         uint lendEnd;
         bool confirmed;
     }
 
     LendItem[] public lendItems;
 
-    function newPolicy(string name, uint idStart, uint idEnd, uint maxTimeFrame,
-                       uint lendingFee, uint depositAmount,
+    function newPolicy(string name, string category, uint maxTimeFrame,
+                       uint lendingFee, uint minLendingFee, uint depositAmount,
                        uint overdueTickMoneyRate, uint overdueTickTimeRate,
                        uint maxOverdue, bool relendingAllowed) {
         if (msg.sender == owner) {
-            uint[2] memory idRange;
-            idRange[0] = idStart;
-            idRange[1] = idEnd;
-            policies.push(Policy(name, idRange, maxTimeFrame, lendingFee,
-                                 depositAmount, overdueTickMoneyRate,
-                                 overdueTickTimeRate, maxOverdue, 
-                                 relendingAllowed));
+            policies.push(Policy(name, category, maxTimeFrame, lendingFee,
+                                 minLendingFee, depositAmount,
+                                 overdueTickMoneyRate, overdueTickTimeRate,
+                                 maxOverdue, relendingAllowed));
         }
     }
 
@@ -61,58 +60,79 @@ contract Lending {
         throw;
     }
 
-    function lendRequest(uint itemId, uint timeFrame, uint policyId) payable {
-        if (policies[policyId].idRange[0] <= itemId
-            && itemId <= policies[policyId].idRange[1]
-            && timeFrame < policies[policyId].maxTimeFrame) {
-               // TODO check payed money
-            lendItems.push(
-                LendItem(msg.sender, policyId, block.timestamp + timeFrame,
-                         false));
+    function lendRequest(uint itemId, string category, uint timeFrame,
+                         string policyName) payable {
+        uint policyId = getPolicy(policyName);
+        require(strings.equals(category.toSlice(),
+                               policies[policyId].category.toSlice()));
+        require(timeFrame < policies[policyId].maxTimeFrame);
+        require(msg.value >= calcPreLendPayment(policyId, timeFrame));
+        lendItems.push(LendItem(itemId, policyId, msg.sender,
+                                block.timestamp + timeFrame, false));
+    }
+
+    function min(uint a, uint b) internal returns (uint) {
+        if(a<b) {
+            return a;
+        }
+        else {
+            return b;
         }
     }
 
-    function getUnconfirmedLendItems() constant internal returns (LendItem[]) {
-        LendItem[] memory ret;
-        for (uint i = 0; i<lendItems.length; i++) {
-            if (lendItems[i].confirmed == false) {
-                ret[i] = lendItems[i];
-            }
+    function max(uint a, uint b) internal returns (uint) {
+        if(a>b) {
+            return a;
         }
-        return ret;
+        else {
+            return b;
+        }
+    }
+
+    function calcPreLendPayment (uint policyId, uint timeFrame)
+        constant returns (uint) {
+        return (max(policies[policyId].minLendingFee,
+                    timeFrame * policies[policyId].lendingFee)
+                    + policies[policyId].depositAmount);
+    }
+
+    function calcPostLendPayback(uint lendId) constant returns (int) {
+        uint overdue = 0;
+        if (block.timestamp > lendItems[lendId].lendEnd) {
+            overdue = block.timestamp - lendItems[lendId].lendEnd;
+        }
+        overdue = overdue /
+            policies[lendItems[lendId].policyId].overdueTickTimeRate;
+        return int(policies[lendItems[lendId].policyId].depositAmount) -
+            int(min(policies[lendItems[lendId].policyId].maxOverdue,
+                overdue * policies[lendItems[lendId].policyId].overdueTickMoneyRate));
+
     }
 
     function lendConfirm(uint lendRequestId) {
-        if (msg.sender == owner) {
-            lendItems[lendRequestId].confirmed = true;
-        }
-    }
-
-    function getConfirmedLendItems() constant internal returns (LendItem[]) {
-        LendItem[] memory ret;
-        for (uint i = 0; i<lendItems.length; i++) {
-            if (lendItems[i].confirmed == true) {
-                ret[i] = lendItems[i];
-            }
-        }
-        return ret;
+        require(msg.sender == owner);
+        require(lendRequestId < lendItems.length - 1);
+        lendItems[lendRequestId].confirmed = true;
     }
 
     function lendComplete(uint lendRequestId) {
-        if (msg.sender == owner) {
-            // TODO pay remainig money back
-            //lendItems[lendRequestId] = lendItems[lendItems.length];
-            lendItems.length--;
+        require(msg.sender == owner);
+        require(lendRequestId < lendItems.length - 1);
+        int payback = calcPostLendPayback(lendRequestId);
+        if (payback > 0) {
+            lendItems[lendRequestId].lender.transfer(uint(payback));
         }
+        // TODO pay remainig money back
+        lendItems[lendRequestId] = lendItems[lendItems.length - 1];
+        delete lendItems[lendItems.length - 1];
     }
 
     // swarm address to current item sqlite db file
     string currentDb;
 
     function setCurrentDb(string val) {
-        if (msg.sender == owner) {
-            currentDb = val;
-        }
+        require(msg.sender == owner);
+        currentDb = val;
     }
 
     function getCurrentDb() constant returns (string) {
