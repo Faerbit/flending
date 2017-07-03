@@ -6,7 +6,7 @@ import "./strings.sol";
 // money is always in wei
 contract Lending {
     using strings for *;
-    address owner;
+    address public owner;
 
     function Lending () {
         owner = msg.sender;

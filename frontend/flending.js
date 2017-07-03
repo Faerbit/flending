@@ -338,6 +338,13 @@ function init(dbAddress, contract) {
             console.error(error);
         });
     }
+    contract.owner().then( owner => {
+        if (owner == web3.eth.accounts[0]) {
+            $("li.hidden").each(function(index) {
+                $(this).removeClass("hidden");
+            });
+        }
+    });
     $("#newCategory :submit").prop("disabled", false);
     $("#newCategory").submit(newCategory);
     $("#newItem :submit").prop("disabled", false);
@@ -347,25 +354,10 @@ function init(dbAddress, contract) {
 }
 
 $(document).ready(function() {
-    /*$("#newPolicy :submit").prop("disabled", true);
-    $("#newLendRequest :submit").prop("disabled", true);
-    $("#refreshUnconfirmed").prop("disabled", true);
-    $("#refreshComplete").prop("disabled", true);
-    $("#refreshCompleteBorrow").prop("disabled", true);
-    $("#confirm").prop("disabled", true);
-    $("#complete").prop("disabled", true);
-    compile(); */
-
-    $("#newCategory :submit").prop("disabled", true);
-    $("#newItem :submit").prop("disabled", true);
-    $("#saveDb").prop("disabled", true);
-
     var Web3 = require("web3");
     if (typeof web3 !== "undefined") {
         console.log(web3.currentProvider);
         window.web3 = new Web3(web3.currentProvider);
-        /*window.web3.eth.defaultAccount = window.web3.eth.accounts[0]; 
-        web3.eth.defaultAccount = web3.eth.accounts[0];*/
     }
     else {
         alert("No web3 provider found. App unable to function!");
