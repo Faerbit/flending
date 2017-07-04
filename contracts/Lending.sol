@@ -119,20 +119,19 @@ contract Lending {
 
     function lendConfirm(uint lendRequestId) {
         require(msg.sender == owner);
-        require(lendRequestId < lendItems.length - 1);
+        require(lendRequestId < lendItems.length);
         lendItems[lendRequestId].confirmed = true;
     }
 
     function lendComplete(uint lendRequestId) {
         require(msg.sender == owner);
-        require(lendRequestId < lendItems.length - 1);
+        require(lendRequestId < lendItems.length);
         int payback = calcPostLendPayback(lendRequestId);
         if (payback > 0) {
             lendItems[lendRequestId].lender.transfer(uint(payback));
         }
-        // TODO pay remainig money back
         lendItems[lendRequestId] = lendItems[lendItems.length - 1];
-        delete lendItems[lendItems.length - 1];
+        lendItems.length--;
     }
 
     // swarm address to current item sqlite db file

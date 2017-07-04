@@ -306,6 +306,7 @@ function confirmLend() {
     console.log("lendId: " + this.lendId);
     $("#" + this.buttonId).prop("disabled", true);
     web3.eth.estimateGas(contract.lendConfirm.call(this.lendId), estGas => {
+        estGas = parseInt(estGas * 1.25);
         contract.lendConfirm(this.lendId, {from: web3.eth.accounts[0], gas: estGas}).then(result =>{
             console.log(result);
             refreshContract();
@@ -314,8 +315,10 @@ function confirmLend() {
 }
 
 function completeLend() {
+    console.log("lendId: " + this.lendId);
     $("#" + this.buttonId).prop("disabled", true);
     web3.eth.estimateGas(contract.lendComplete.call(this.lendId), estGas => {
+        estGas = parseInt(estGas * 1.25);
         contract.lendComplete(this.lendId, {from: web3.eth.accounts[0], gas: estGas}).then(result =>{
             console.log(result);
             refreshContract();
