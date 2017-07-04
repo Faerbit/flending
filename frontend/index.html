@@ -23,12 +23,22 @@
                     <h2>Neue Leihanfrage</h2>
                 <form id="newLendRequest">
                         <div class="form-group">
-                        <label for="name">Name der Policy:</label>
-                        <input type="text" class="form-control" id="name" name="name" placeholder="Name">
+                        <label for="newRequestSelect">Kategorie:</label>
+                        <select class="form-control" name="category" id="newRequestSelect">
+                            <option style="display:none">... Lädt ...</option>
+                        </select>
                         </div>
                         <div class="form-group">
-                        <label for="itemId">Item ID:</label>
-                        <input type="number" class="form-control" id="itemId" name="itemId" min="0">
+                        <label for="itemSelect">Item:</label>
+                        <select class="form-control" name="item" id="itemSelect">
+                            <option style="display:none">... Lädt ...</option>
+                        </select>
+                        </div>
+                        <div class="form-group">
+                        <label for="policySelect">Policy:</label>
+                        <select class="form-control" name="policy" id="policySelect">
+                            <option style="display:none">... Lädt ...</option>
+                        </select>
                         </div>
                         <div class="form-group">
                         <label for="lendDuration">Dauer:</label>
@@ -46,8 +56,8 @@
                                     <th>Bestätigt</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr id="lendTableBorrow">
+                            <tbody id="lendTableBorrow">
+                                <tr>
                                     <td>-</td>
                                     <td>-</td>
                                     <td>-</td>
@@ -153,13 +163,13 @@
                                 <th></th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr id="lendTableUnconfirmed">
+                        <tbody id="lendTableUnconfirmed">
+                            <tr>
                                     <td>-</td>
                                     <td>-</td>
                                     <td>-</td>
                                     <td>-</td>
-                                <td><button class="btn btn-primary" id="confirm" disabled>Bestätigen</button></td>
+                                <td><button class="btn btn-primary" disabled>Bestätigen</button></td>
                             </tr>
                         </tbody>
                     </table>
@@ -176,13 +186,13 @@
                                 <th></th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr id="lendTableConfirmed">
+                        <tbody id="lendTableConfirmed">
+                            <tr>
                                     <td>-</td>
                                     <td>-</td>
                                     <td>-</td>
                                     <td>-</td>
-                                <td><button class="btn btn-primary" id="complete" disabled>Zurückerhalten</button></td>
+                                <td><button class="btn btn-primary" disabled>Zurückerhalten</button></td>
                             </tr>
                         </tbody>
                     </table>

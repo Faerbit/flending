@@ -73,7 +73,7 @@ contract Lending {
         require(strings.equals(category.toSlice(),
                                policies[policyId].category.toSlice()));
         require(timeFrame < policies[policyId].maxTimeFrame);
-        require(msg.value >= calcPreLendPayment(policyId, timeFrame));
+        require(msg.value >= calcPreLendPayment(policyName, timeFrame));
         lendItems.push(LendItem(itemId, policyId, msg.sender,
                                 block.timestamp + timeFrame, false));
     }
@@ -96,8 +96,9 @@ contract Lending {
         }
     }
 
-    function calcPreLendPayment (uint policyId, uint timeFrame)
+    function calcPreLendPayment (string policyName, uint timeFrame)
         constant returns (uint) {
+            uint policyId = getPolicy(policyName);
         return (max(policies[policyId].minLendingFee,
                     timeFrame * policies[policyId].lendingFee)
                     + policies[policyId].depositAmount);

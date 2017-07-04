@@ -1,131 +1,4 @@
 "use strict";
-function submitNewLendRequest(event) {
-    event.preventDefault();
-    var par = {};
-    $.each($(event.target).serializeArray(), function(_, kv) {
-        par[kv.name] = kv.value;
-    });
-    var valid = true;
-    $.each(par, function(key, value) {
-        if (value == "")  {
-            return (valid = false);
-        }
-    });
-    if (valid == false) {
-        alert("Alle Felder müssen ausgefüllt werden!");
-        return;
-    }
-    else {
-        console.log(par);
-        var policyId = this.contract.getPolicy.call(par["name"]).toLocaleString();
-        this.contract.lendRequest(par["itemId"], par["lendDuration"], policyId,
-            {from: this.web3.eth.accounts[1], gas: 4700000},
-            function(error, result) {
-                if(error) {
-                    console.error(error);
-                }
-                else {
-                    console.log(result);
-                }
-        }.bind(this));
-        $("#status-borrow").html("Querying");
-    }
-}
-
-function refreshUnconfirmed(event) {
-    this.contract.lendItems.call(0, function(error, item) {
-        if (error) {
-            console.error(error);
-            $("#un0").html("-");
-            $("#un1").html("-");
-            $("#un2").html("-");
-            return;
-        }
-        if (item[3] == false) {
-            $("#un0").html(item[0]);
-            $("#un1").html(item[1].toLocaleString());
-            $("#un2").html(item[2].toLocaleString());
-            $("#confirm").prop("disabled", false);
-            $("#confirm").on("click", function(event) {
-                this.contract.lendConfirm(0,
-                    {from: this.web3.eth.accounts[0], gas:4700000},
-                    function(error, result) {
-                        if(error) {
-                            console.error(error);
-                        }
-                        else {
-                            console.log(result);
-                        }
-                    });
-            }.bind(this));
-        }
-        else {
-            $("#un0").html("-");
-            $("#un1").html("-");
-            $("#un2").html("-");
-            $("#confirm").prop("disabled", true);
-            $("#confirm").off("click");
-        }
-    }.bind(this));
-}
-function refreshConfirmed(event) {
-    this.contract.lendItems.call(0, function(error, item) {
-        if (error) {
-            console.error(error);
-            $("#co0").html("-");
-            $("#co1").html("-");
-            $("#co2").html("-");
-            return;
-        }
-        if (item[3] == true) {
-            $("#co0").html(item[0]);
-            $("#co1").html(item[1].toLocaleString());
-            $("#co2").html(item[2].toLocaleString());
-            $("#complete").prop("disabled", false);
-            $("#complete").on("click", function(event) {
-                this.contract.lendComplete(0,
-                    {from: this.web3.eth.accounts[0], gas:4700000},
-                    function(error, result) {
-                        if(error) {
-                            console.error(error);
-                        }
-                        else {
-                            console.log(result);
-                        }
-                    });
-            }.bind(this));
-        }
-        else {
-            $("#co0").html("-");
-            $("#co1").html("-");
-            $("#co2").html("-");
-            $("#complete").prop("disabled", true);
-            $("#complete").off("click");
-        }
-    }.bind(this));
-}
-
-function refreshConfirmedBorrow(event) {
-    this.contract.lendItems.call(0, function(error, item) {
-        if (error) {
-            console.error(error);
-            $("#cob0").html("-");
-            $("#cob1").html("-");
-            $("#cob2").html("-");
-            return;
-        }
-        if (item[3] == true) {
-            $("#cob0").html(item[0]);
-            $("#cob1").html(item[1].toLocaleString());
-            $("#cob2").html(item[2].toLocaleString());
-        }
-        else {
-            $("#cob0").html("-");
-            $("#cob1").html("-");
-            $("#cob2").html("-");
-        }
-    });
-}
 
 var db;
 var contract;
@@ -149,6 +22,50 @@ function parseForm(event) {
     }
 }
 
+function processItem(lendId) {
+    contract.lendItems.call(lendId).then(item => {
+        console.log(lendId);
+        contract.policies.call(item[1]).then(policy => {
+            console.log(lendId);
+            if (item[2] == web3.eth.accounts[0]) {
+                    $("#lendTableBorrow").append("<tr>");
+                    $("#lendTableBorrow").append("<td>" + policy[0] + "</td>");
+                    $("#lendTableBorrow").append("<td>" + item[3] + "</td>");
+                    if (item[4]) {
+                        $("#lendTableBorrow").append("<td>Ja</td>");
+                    }
+                    else {
+                        $("#lendTableBorrow").append("<td>Nein</td>");
+                    }
+                    $("#lendTableBorrow").append("</tr>");
+            }
+            if (!item[4])  {
+                $("#lendTableUnconfirmed").append("<tr>");
+                $("#lendTableUnconfirmed").append("<td>" + item[0] + "</td>");
+                $("#lendTableUnconfirmed").append("<td>" + policy[0] + "</td>");
+                $("#lendTableUnconfirmed").append("<td>" + item[2] + "</td>");
+                $("#lendTableUnconfirmed").append("<td>" + item[3] + "</td>");
+                var buttonId = "confirm" + lendId;
+                $("#lendTableUnconfirmed").append("<td><button class=\"btn btn-primary\" id=\"" + buttonId + "\" >Bestätigen</button></td>");
+                $("#lendTableUnconfirmed").append("</tr>");
+                var context = { lendId : lendId, buttonId: buttonId };
+                $("#" + buttonId).on("click", confirmLend.bind(context));
+            }
+            else {
+                $("#lendTableConfirmed").append("<tr>");
+                $("#lendTableConfirmed").append("<td>" + item[0] + "</td>");
+                $("#lendTableConfirmed").append("<td>" + policy[0] + "</td>");
+                $("#lendTableConfirmed").append("<td>" + item[2] + "</td>");
+                $("#lendTableConfirmed").append("<td>" + item[3] + "</td>");
+                var buttonId = "complete" + lendId;
+                $("#lendTableConfirmed").append("<td><button class=\"btn btn-primary\" id=\"" + buttonId + "\" >Zurückerhalten</button></td>");
+                $("#lendTableConfirmed").append("</tr>");
+                var context = { lendId : lendId, buttonId: buttonId };
+                $("#" + buttonId).on("click", completeLend.bind(context));
+            }
+        });
+    });
+}
 function refreshContract() {
     contract.policiesLength().then(length => {
         if (length.toNumber() > 0) {
@@ -194,6 +111,16 @@ function refreshContract() {
             });
         }
     });
+    contract.lendItemsLength().then(length => {
+        if (length.toNumber() > 0) {
+            $("#lendTableBorrow").html("");
+            $("#lendTableUnconfirmed").html("");
+            $("#lendTableConfirmed").html("");
+        }
+        for(var i = 0; i<length.toNumber(); i++) {
+            processItem(i);
+        }
+    });
 }
 
 function createNewDatabase() {
@@ -203,30 +130,73 @@ function createNewDatabase() {
     var stmt = "create table categories(name text unique);"
     stmt += "create table items(category text, name text);"
     db.run(stmt);
+    console.log(db);
     console.log("Created new database.");
 }
 
 function refreshLocal() {
-    $("#categories").html("");
-    $("#items").html("");
-    $("#newItemSelect").html("");
-    $("#newPolicySelect").html("");
     var res = db.exec("select * from categories");
     if (res.length > 0) {
+        $("#categories").html("");
+        $("#newItemSelect").html("");
+        $("#newPolicySelect").html("");
+        $("#newRequestSelect").html("");
         var vals = res[0]["values"];
         $.each(vals, function( key, val) {
             $("#categories").append("<tr><td>" + key + "</td><td>" + val + "</td>/tr>");
             $("#newItemSelect").append("<option>" + val + "</option>");
             $("#newPolicySelect").append("<option>" + val + "</option>");
+            $("#newRequestSelect").append("<option>" + val + "</option>");
         });
+        updateLendForm($("#newRequestSelect").val());
     }
     res = db.exec("select * from items");
     if (res.length > 0) {
+        $("#items").html("");
         var vals = res[0]["values"];
         $.each(vals, function( key, val) {
             $("#items").append("<tr><td>" + key + "</td><td>" + val[0] + "</td><td>" + val[1] + "</td>/tr>");
         });
     }
+}
+
+function requestSelect(event) {
+    updateLendForm($(this).val());
+}
+
+function updateLendForm(category) {
+    var res = db.exec("select name from items where category = '" + category + "'");
+    if (res.length > 0) {
+        $("#itemSelect").html("");
+        $.each(res[0]["values"], function( key, val) {
+            $("#itemSelect").append("<option>" + val + "</option>");
+        });
+    }
+    contract.policiesLength().then(length => {
+        if (length.toNumber() > 0) {
+            $("#policySelect").html("");
+        }
+        for(var i = 0; i<length.toNumber(); i++) {
+            var updated = false;
+            contract.policies.call(i).then(policy => {
+                if (category === policy[1]) {
+                    $("#policySelect").append("<option>" + policy[0] + "</option>");
+                    if (!updated) {
+                        updateMaxTimeFrame($("#policySelect").val());
+                        updated = true;
+                    }
+                }
+            });
+        }
+    });
+}
+
+function updateMaxTimeFrame(policyName) {
+    contract.getPolicy(policyName).then(policyId => {
+        contract.policies.call(policyId.toNumber()).then(policy => {
+            $("#lendDuration").attr({"max" : policy[2].toNumber()});
+        });
+    });
 }
 
 function newCategory(event) {
@@ -305,7 +275,53 @@ function submitNewPolicy(event) {
         });
     }
 }
+function submitNewLendRequest(event) {
+    event.preventDefault();
+    var par;
+    if ((par = parseForm(event)) == false) {
+        alert("Alle Felder müssen ausgefüllt werden!");
+        return;
+    }
+    else {
+        $("#newLendRequest :submit").prop("disabled", true);
+        console.log(par);
+        var res = db.exec("select rowid from items where name = '" + par["item"] + "'");
+        var itemId = res[0]["values"][0][0]
+        web3.eth.estimateGas(contract.lendRequest.call(itemId, par["category"], 
+            par["lendDuration"], par["policy"]), estGas => {
+                contract.calcPreLendPayment(par["policy"], par["lendDuration"]).then( amount => {
+                    contract.lendRequest(itemId, par["category"],
+                        par["lendDuration"], par["policy"], {from: web3.eth.accounts[0], gas: estGas,
+                            value: amount.toNumber()}).then(result => {
+                                console.log(result);
+                                refreshContract();
+                                $("#newLendRequest :submit").prop("disabled", false);
+                            });
+                });
+        });
+    }
+}
 
+function confirmLend() {
+    console.log("lendId: " + this.lendId);
+    $("#" + this.buttonId).prop("disabled", true);
+    web3.eth.estimateGas(contract.lendConfirm.call(this.lendId), estGas => {
+        contract.lendConfirm(this.lendId, {from: web3.eth.accounts[0], gas: estGas}).then(result =>{
+            console.log(result);
+            refreshContract();
+        });
+    });
+}
+
+function completeLend() {
+    $("#" + this.buttonId).prop("disabled", true);
+    web3.eth.estimateGas(contract.lendComplete.call(this.lendId), estGas => {
+        contract.lendComplete(this.lendId, {from: web3.eth.accounts[0], gas: estGas}).then(result =>{
+            console.log(result);
+            refreshContract();
+        });
+    });
+}
 
 function init(dbAddress) {
     if (dbAddress === "") {
@@ -316,6 +332,7 @@ function init(dbAddress) {
         var sql = require("sql.js");
         swarm.download(dbAddress).then(buffer => {
             db = new sql.Database(buffer);
+            console.log(db);
             refreshLocal();
         },
         error => {
@@ -329,13 +346,17 @@ function init(dbAddress) {
             });
         }
     });
-    $("#newCategory :submit").prop("disabled", false);
     $("#newCategory").submit(newCategory);
-    $("#newItem :submit").prop("disabled", false);
+    $("#newCategory :submit").prop("disabled", false);
     $("#newItem").submit(newItem);
+    $("#newItem :submit").prop("disabled", false);
     $("#saveDb").on("click", saveDb);
-    $("#newPolicy :submit").prop("disabled", false);
     $("#newPolicy").submit(submitNewPolicy);
+    $("#newPolicy :submit").prop("disabled", false);
+    $("#newRequestSelect").change(requestSelect);
+    $("#policySelect").change(updateMaxTimeFrame);
+    $("#newLendRequest").submit(submitNewLendRequest);
+    $("#newLendRequest :submit").prop("disabled", false);
     refreshContract();
 }
 
