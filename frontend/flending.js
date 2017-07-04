@@ -1,48 +1,4 @@
 "use strict";
-function submitNewPolicy(event) {
-    event.preventDefault();
-    var par = {};
-    $.each($(event.target).serializeArray(), function(_, kv) {
-        par[kv.name] = kv.value;
-    });
-    var valid = true;
-    $.each(par, function(key, value) {
-        if (value == "")  {
-            return (valid = false);
-        }
-    });
-    if (valid == false) {
-        alert("Alle Felder müssen ausgefüllt werden!");
-        return;
-    }
-    else {
-        if ("relendingAllowed" in par){
-            par["relendingAllowed"] = true;
-        }
-        else {
-            par["relendingAllowed"] = false;
-        }
-        console.log(par);
-        this.contract.newPolicy(par["name"], par["idStart"], par["idEnd"],
-            par["maxTimeFrame"], par["lendingFee"], par["depositAmount"],
-            par["overdueTickMoneyRate"], par["overdueTickTimeRate"],
-            par["maxOverdue"],
-            par["relendingAllowed"], 
-            {from: this.web3.eth.accounts[0], gas: 4700000},
-            function(error, result) {
-                if(error) {
-                    console.error(error);
-                }
-                else {
-                    console.log(result);
-                    $("#status-lend").html(this.contract.getPolicy.call(par["name"]).toLocaleString());
-                    console.log(this.contract.getPolicy.call(par["name"]).toLocaleString());
-                }
-        }.bind(this));
-        $("#status-lend").html("Querying");
-    }
-}
-
 function submitNewLendRequest(event) {
     event.preventDefault();
     var par = {};
@@ -171,57 +127,8 @@ function refreshConfirmedBorrow(event) {
     });
 }
 
-/*function init(web3Instance, contractInstance) {
-    $("#newPolicy :submit").prop("disabled", false);
-    var context = { web3: web3Instance, contract: contractInstance};
-    $("#newPolicy").submit(submitNewPolicy.bind(context));
-    $("#newLendRequest :submit").prop("disabled", false);
-    $("#newLendRequest").submit(submitNewLendRequest.bind(context));
-    $("#refreshUnconfirmed").prop("disabled", false);
-    $("#refreshUnconfirmed").on("click", refreshUnconfirmed.bind(context));
-    $("#refreshComplete").prop("disabled", false);
-    $("#refreshComplete").on("click", refreshConfirmed.bind(context));
-    $("#refreshCompleteBorrow").prop("disabled", false);
-    $("#refreshCompleteBorrow").on("click", refreshConfirmedBorrow.bind(context));
-}*/
-
-function compile() {
-    /*var Web3 = require("web3");
-
-    var web3 = new Web3(new Web3.providers.HttpProvider(
-        "http://localhost:8545"));
-
-    var fs = require("fs");
-    var code = fs.readFileSync("build/compiled.sol").toString();
-    web3.eth.compile.solidity(code, function(error, contract) {
-        if(error) {
-            console.error(error);
-        }
-        else {
-            var LendingContract = web3.eth.contract(
-                contract.info.abiDefinition);
-            var deployedContract = LendingContract.new(
-                {data: contract.code, from: web3.eth.accounts[0], gas: 4700000},
-                function(error, contract) {
-                    if(error) {
-                        console.error(error);
-                    }
-                    else {
-                        if (typeof contract.address != 'undefined') {
-                                console.log('Contract mined! address: ' 
-                                    + contract.address + ' transactionHash: '
-                                    + contract.transactionHash);
-                                var contractInstance = LendingContract.at(
-                                    contract.address);
-                                init(web3, contractInstance);
-                            }
-                        }
-                });
-        }
-    });*/
-}
-
 var db;
+var contract;
 
 function parseForm(event) {
     var par = {};
@@ -242,6 +149,53 @@ function parseForm(event) {
     }
 }
 
+function refreshContract() {
+    contract.policiesLength().then(length => {
+        if (length.toNumber() > 0) {
+            $("#policyTableLend").html("");
+            $("#policyTableBorrow").html("");
+        }
+        for(var i = 0; i<length.toNumber(); i++) {
+            contract.policies.call(i).then(policy => {
+                $("#policyTableLend").append("<tr>");
+                $("#policyTableLend").append("<td>" + policy[0] + "</td>");
+                $("#policyTableLend").append("<td>" + policy[1] + "</td>");
+                $("#policyTableLend").append("<td>" + policy[2].toNumber() + "</td>");
+                $("#policyTableLend").append("<td>" + policy[3].toNumber() + "</td>");
+                $("#policyTableLend").append("<td>" + policy[4].toNumber() + "</td>");
+                $("#policyTableLend").append("<td>" + policy[5].toNumber() + "</td>");
+                $("#policyTableLend").append("<td>" + policy[6].toNumber() + "</td>");
+                $("#policyTableLend").append("<td>" + policy[7].toNumber() + "</td>");
+                $("#policyTableLend").append("<td>" + policy[8].toNumber() + "</td>");
+                if (policy[9]) {
+                    $("#policyTableLend").append("<td>Ja</td>");
+                }
+                else {
+                    $("#policyTableLend").append("<td>Nein</td>");
+                }
+                $("#policyTableLend").append("</tr>");
+                $("#policyTableBorrow").append("<tr>");
+                $("#policyTableBorrow").append("<td>" + policy[0] + "</td>");
+                $("#policyTableBorrow").append("<td>" + policy[1] + "</td>");
+                $("#policyTableBorrow").append("<td>" + policy[2].toNumber() + "</td>");
+                $("#policyTableBorrow").append("<td>" + policy[3].toNumber() + "</td>");
+                $("#policyTableBorrow").append("<td>" + policy[4].toNumber() + "</td>");
+                $("#policyTableBorrow").append("<td>" + policy[5].toNumber() + "</td>");
+                $("#policyTableBorrow").append("<td>" + policy[6].toNumber() + "</td>");
+                $("#policyTableBorrow").append("<td>" + policy[7].toNumber() + "</td>");
+                $("#policyTableBorrow").append("<td>" + policy[8].toNumber() + "</td>");
+                if (policy[9]) {
+                    $("#policyTableBorrow").append("<td>Ja</td>");
+                }
+                else {
+                    $("#policyTableBorrow").append("<td>Nein</td>");
+                }
+                $("#policyTableBorrow").append("</tr>");
+            });
+        }
+    });
+}
+
 function createNewDatabase() {
     var sql = require("sql.js");
     db = new sql.Database();
@@ -252,21 +206,18 @@ function createNewDatabase() {
     console.log("Created new database.");
 }
 
-
-function refreshDb() {
-    refreshLocal();
-}
-
 function refreshLocal() {
     $("#categories").html("");
     $("#items").html("");
     $("#newItemSelect").html("");
+    $("#newPolicySelect").html("");
     var res = db.exec("select * from categories");
     if (res.length > 0) {
         var vals = res[0]["values"];
         $.each(vals, function( key, val) {
             $("#categories").append("<tr><td>" + key + "</td><td>" + val + "</td>/tr>");
             $("#newItemSelect").append("<option>" + val + "</option>");
+            $("#newPolicySelect").append("<option>" + val + "</option>");
         });
     }
     res = db.exec("select * from items");
@@ -309,30 +260,63 @@ function newItem(event) {
 function saveDb(event) {
     $("saveDb").prop("disabled", true);
     const swarm = require("swarm-js").at("http://localhost:8500");
-    console.log(db.export());
     swarm.upload(new Buffer(db.export())).then(hash => {
         console.log(hash);
-        web3.eth.estimateGas(this.contract.setCurrentDb.call(hash), estGas => {
-            console.log(estGas);
-            this.contract.setCurrentDb(hash, {from: web3.eth.accounts[0], gas: estGas }).then(result => {
+        web3.eth.estimateGas(contract.setCurrentDb.call(hash), estGas => {
+            contract.setCurrentDb(hash, {from: web3.eth.accounts[0], gas: estGas }).then(result => {
                 console.log(result);
-                refreshDb();
+                refreshLocal();
             });
         });
     });
 }
 
-function init(dbAddress, contract) {
+function submitNewPolicy(event) {
+    event.preventDefault();
+    var par;
+    if ((par = parseForm(event)) == false) {
+        alert("Alle Felder müssen ausgefüllt werden!");
+        return;
+    }
+    else {
+        $("#newPolicy :submit").prop("disabled", true);
+        if ("relendingAllowed" in par){
+            par["relendingAllowed"] = true;
+        }
+        else {
+            par["relendingAllowed"] = false;
+        }
+        console.log(par);
+        web3.eth.estimateGas(contract.newPolicy.call(par["name"],
+            par["category"], par["maxTimeFrame"],
+            par["lendingFee"], par["minLendingFee"], par["depositAmount"],
+            par["overdueTickMoneyRate"], par["overdueTickTimeRate"],
+            par["maxOverdue"], par["relendingAllowed"]), estGas => {
+                contract.newPolicy(par["name"],
+                    par["category"], par["maxTimeFrame"],
+                    par["lendingFee"], par["minLendingFee"], par["depositAmount"],
+                    par["overdueTickMoneyRate"], par["overdueTickTimeRate"],
+                    par["maxOverdue"], par["relendingAllowed"],
+                    {from: web3.eth.accounts[0], gas: estGas}).then(result => {
+                        console.log(result);
+                        refreshContract();
+                        $("#newPolicy :submit").prop("disabled", false);
+                    });
+        });
+    }
+}
+
+
+function init(dbAddress) {
     if (dbAddress === "") {
         createNewDatabase();
     }
     else {
         const swarm = require("swarm-js").at("http://localhost:8500");
         var sql = require("sql.js");
-        console.log(typeof dbAddress);
         swarm.download(dbAddress).then(buffer => {
             db = new sql.Database(buffer);
-            refreshDb();
+            refreshLocal();
         },
         error => {
             console.error(error);
@@ -349,14 +333,15 @@ function init(dbAddress, contract) {
     $("#newCategory").submit(newCategory);
     $("#newItem :submit").prop("disabled", false);
     $("#newItem").submit(newItem);
-    var context = { contract: contract };
-    $("#saveDb").on("click", saveDb.bind(context));
+    $("#saveDb").on("click", saveDb);
+    $("#newPolicy :submit").prop("disabled", false);
+    $("#newPolicy").submit(submitNewPolicy);
+    refreshContract();
 }
 
 $(document).ready(function() {
     var Web3 = require("web3");
     if (typeof web3 !== "undefined") {
-        console.log(web3.currentProvider);
         window.web3 = new Web3(web3.currentProvider);
     }
     else {
@@ -364,13 +349,15 @@ $(document).ready(function() {
         return;
     }
     var contractJson = require("../build/contracts/Lending.json");
-    var contract = require("truffle-contract");
-    var Lending = contract(contractJson);
+    var Contract = require("truffle-contract");
+    var Lending = Contract(contractJson);
     Lending.setProvider(web3.currentProvider);
     Lending.deployed().then(function(deployed) {
+        contract = deployed;
+        console.log(contract);
         deployed.getCurrentDb().then(function(dbAddress) {
             console.log("DB address: " + dbAddress);
-            init(dbAddress, deployed);
+            init(dbAddress);
         });
     });
 });

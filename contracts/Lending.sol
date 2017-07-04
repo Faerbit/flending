@@ -27,6 +27,10 @@ contract Lending {
     }
 
     Policy[] public policies;
+
+    function policiesLength() constant returns (uint) {
+        return policies.length;
+    }
    
     struct LendItem {
         uint itemId;
@@ -38,16 +42,19 @@ contract Lending {
 
     LendItem[] public lendItems;
 
+    function lendItemsLength() constant returns (uint) {
+        return lendItems.length;
+    }
+
     function newPolicy(string name, string category, uint maxTimeFrame,
                        uint lendingFee, uint minLendingFee, uint depositAmount,
                        uint overdueTickMoneyRate, uint overdueTickTimeRate,
                        uint maxOverdue, bool relendingAllowed) {
-        if (msg.sender == owner) {
-            policies.push(Policy(name, category, maxTimeFrame, lendingFee,
-                                 minLendingFee, depositAmount,
-                                 overdueTickMoneyRate, overdueTickTimeRate,
-                                 maxOverdue, relendingAllowed));
-        }
+        require(msg.sender == owner);
+        policies.push(Policy(name, category, maxTimeFrame, lendingFee,
+                             minLendingFee, depositAmount,
+                             overdueTickMoneyRate, overdueTickTimeRate,
+                             maxOverdue, relendingAllowed));
     }
 
     function getPolicy(string pName) constant returns (uint) {
