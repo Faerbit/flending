@@ -63,7 +63,7 @@ contract Lending {
             }
         }
         // throw if not found
-        throw;
+        revert();
     }
 
     function lendRequest(uint itemId, string category, uint timeFrame,
