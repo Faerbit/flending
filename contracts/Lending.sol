@@ -20,8 +20,7 @@ contract Lending {
         uint lendingFee; // wei per Second
         uint minLendingFee;
         uint depositAmount;
-        uint overdueTickMoneyRate;
-        uint overdueTickTimeRate;
+        uint overdueFee; // wei per Second
         uint maxOverdue;
         bool relendingAllowed;
     }
@@ -37,6 +36,7 @@ contract Lending {
         uint policyId;
         address lender;
         uint lendEnd;
+        uint timeFrame;
         bool confirmed;
     }
 
@@ -48,12 +48,11 @@ contract Lending {
 
     function newPolicy(string name, string category, uint maxTimeFrame,
                        uint lendingFee, uint minLendingFee, uint depositAmount,
-                       uint overdueTickMoneyRate, uint overdueTickTimeRate,
-                       uint maxOverdue, bool relendingAllowed) {
+                       uint overdueFee, uint maxOverdue,
+                       bool relendingAllowed) {
         require(msg.sender == owner);
         policies.push(Policy(name, category, maxTimeFrame, lendingFee,
-                             minLendingFee, depositAmount,
-                             overdueTickMoneyRate, overdueTickTimeRate,
+                             minLendingFee, depositAmount, overdueFee,
                              maxOverdue, relendingAllowed));
     }
 
@@ -68,13 +67,12 @@ contract Lending {
     }
 
     function lendRequest(uint itemId, string category, uint timeFrame,
-                         string policyName) payable {
-        uint policyId = getPolicy(policyName);
+                         uint policyId) payable {
         require(strings.equals(category.toSlice(),
                                policies[policyId].category.toSlice()));
         require(timeFrame < policies[policyId].maxTimeFrame);
-        require(msg.value >= calcPreLendPayment(policyName, timeFrame));
-        lendItems.push(LendItem(itemId, policyId, msg.sender,
+        require(msg.value >= calcPreLendPayment(policyId, timeFrame));
+        lendItems.push(LendItem(itemId, policyId, msg.sender, block.timestamp,
                                 block.timestamp + timeFrame, false));
     }
 
@@ -96,9 +94,8 @@ contract Lending {
         }
     }
 
-    function calcPreLendPayment (string policyName, uint timeFrame)
+    function calcPreLendPayment (uint policyId, uint timeFrame)
         constant returns (uint) {
-            uint policyId = getPolicy(policyName);
         return (max(policies[policyId].minLendingFee,
                     timeFrame * policies[policyId].lendingFee)
                     + policies[policyId].depositAmount);
@@ -109,18 +106,25 @@ contract Lending {
         if (block.timestamp > lendItems[lendId].lendEnd) {
             overdue = block.timestamp - lendItems[lendId].lendEnd;
         }
-        overdue = overdue /
-            policies[lendItems[lendId].policyId].overdueTickTimeRate;
         return int(policies[lendItems[lendId].policyId].depositAmount) -
             int(min(policies[lendItems[lendId].policyId].maxOverdue,
-                overdue * policies[lendItems[lendId].policyId].overdueTickMoneyRate));
+                overdue * policies[lendItems[lendId].policyId].overdueFee));
 
     }
 
     function lendConfirm(uint lendRequestId) {
         require(msg.sender == owner);
+        require(lendItems[lendRequestId].confirmed == false);
         require(lendRequestId < lendItems.length);
         lendItems[lendRequestId].confirmed = true;
+    }
+
+    function lendDecline(uint lendRequestId) {
+        require(msg.sender == owner);
+        require(lendItems[lendRequestId].confirmed == false);
+        lendItems[lendRequestId].lender.transfer(calcPreLendPayment(
+            lendItems[lendRequestId].policyId,
+            lendItems[lendRequestId].timeFrame));
     }
 
     function lendComplete(uint lendRequestId) {
