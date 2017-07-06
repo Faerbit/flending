@@ -24,41 +24,48 @@ function parseForm(event) {
 
 function processItem(lendId) {
     contract.lendItems.call(lendId).then(item => {
+        var name = db.exec("select name from items where rowid = " + item[0] + ";")
+        name = name[0]["values"][0][0];
         console.log(lendId);
+        console.log(name);
         contract.policies.call(item[1]).then(policy => {
-            console.log(lendId);
             if (item[2] == web3.eth.accounts[0]) {
                     $("#lendTableBorrow").append("<tr>");
+                    $("#lendTableBorrow").append("<td>" + name + "</td>");
                     $("#lendTableBorrow").append("<td>" + policy[0] + "</td>");
                     $("#lendTableBorrow").append("<td>" + item[3] + "</td>");
-                    if (item[4]) {
-                        $("#lendTableBorrow").append("<td>Ja</td>");
+                    if (item[5]) {
+                        $("#lendTableBorrow").append("<td>Yes</td>");
                     }
                     else {
-                        $("#lendTableBorrow").append("<td>Nein</td>");
+                        $("#lendTableBorrow").append("<td>No</td>");
                     }
                     $("#lendTableBorrow").append("</tr>");
             }
-            if (!item[4])  {
+            if (!item[5])  {
                 $("#lendTableUnconfirmed").append("<tr>");
-                $("#lendTableUnconfirmed").append("<td>" + item[0] + "</td>");
+                $("#lendTableUnconfirmed").append("<td>" + name + "</td>");
                 $("#lendTableUnconfirmed").append("<td>" + policy[0] + "</td>");
                 $("#lendTableUnconfirmed").append("<td>" + item[2] + "</td>");
                 $("#lendTableUnconfirmed").append("<td>" + item[3] + "</td>");
-                var buttonId = "confirm" + lendId;
-                $("#lendTableUnconfirmed").append("<td><button class=\"btn btn-primary\" id=\"" + buttonId + "\" >Bestätigen</button></td>");
+                var buttonIdConfirm = "confirm" + lendId;
+                var buttonIdDecline = "decline" + lendId;
+                $("#lendTableUnconfirmed").append("<td><button class=\"btn btn-success\" id=\"" + buttonIdConfirm + "\" >Confirm</button></td>");
+                $("#lendTableUnconfirmed").append("<td><button class=\"btn btn-danger\" id=\"" + buttonIdDecline + "\" >Decline</button></td>");
                 $("#lendTableUnconfirmed").append("</tr>");
-                var context = { lendId : lendId, buttonId: buttonId };
-                $("#" + buttonId).on("click", confirmLend.bind(context));
+                var context = { lendId : lendId, buttonId: buttonIdConfirm };
+                $("#" + buttonIdConfirm).on("click", confirmLend.bind(context));
+                var context = { lendId : lendId, buttonId: buttonIdDecline };
+                $("#" + buttonIdDecline).on("click", declineLend.bind(context));
             }
             else {
                 $("#lendTableConfirmed").append("<tr>");
-                $("#lendTableConfirmed").append("<td>" + item[0] + "</td>");
+                $("#lendTableConfirmed").append("<td>" + name + "</td>");
                 $("#lendTableConfirmed").append("<td>" + policy[0] + "</td>");
                 $("#lendTableConfirmed").append("<td>" + item[2] + "</td>");
                 $("#lendTableConfirmed").append("<td>" + item[3] + "</td>");
                 var buttonId = "complete" + lendId;
-                $("#lendTableConfirmed").append("<td><button class=\"btn btn-primary\" id=\"" + buttonId + "\" >Zurückerhalten</button></td>");
+                $("#lendTableConfirmed").append("<td><button class=\"btn btn-primary\" id=\"" + buttonId + "\" >Received back</button></td>");
                 $("#lendTableConfirmed").append("</tr>");
                 var context = { lendId : lendId, buttonId: buttonId };
                 $("#" + buttonId).on("click", completeLend.bind(context));
@@ -83,12 +90,11 @@ function refreshContract() {
                 $("#policyTableLend").append("<td>" + policy[5].toNumber() + "</td>");
                 $("#policyTableLend").append("<td>" + policy[6].toNumber() + "</td>");
                 $("#policyTableLend").append("<td>" + policy[7].toNumber() + "</td>");
-                $("#policyTableLend").append("<td>" + policy[8].toNumber() + "</td>");
-                if (policy[9]) {
-                    $("#policyTableLend").append("<td>Ja</td>");
+                if (policy[8]) {
+                    $("#policyTableLend").append("<td>Yes</td>");
                 }
                 else {
-                    $("#policyTableLend").append("<td>Nein</td>");
+                    $("#policyTableLend").append("<td>No</td>");
                 }
                 $("#policyTableLend").append("</tr>");
                 $("#policyTableBorrow").append("<tr>");
@@ -100,12 +106,11 @@ function refreshContract() {
                 $("#policyTableBorrow").append("<td>" + policy[5].toNumber() + "</td>");
                 $("#policyTableBorrow").append("<td>" + policy[6].toNumber() + "</td>");
                 $("#policyTableBorrow").append("<td>" + policy[7].toNumber() + "</td>");
-                $("#policyTableBorrow").append("<td>" + policy[8].toNumber() + "</td>");
-                if (policy[9]) {
-                    $("#policyTableBorrow").append("<td>Ja</td>");
+                if (policy[8]) {
+                    $("#policyTableBorrow").append("<td>Yes</td>");
                 }
                 else {
-                    $("#policyTableBorrow").append("<td>Nein</td>");
+                    $("#policyTableBorrow").append("<td>No</td>");
                 }
                 $("#policyTableBorrow").append("</tr>");
             });
@@ -128,7 +133,7 @@ function createNewDatabase() {
     db = new sql.Database();
 
     var stmt = "create table categories(name text unique);"
-    stmt += "create table items(category text, name text);"
+    stmt += "create table items(category text, name text unique);"
     db.run(stmt);
     console.log(db);
     console.log("Created new database.");
@@ -203,7 +208,7 @@ function newCategory(event) {
     event.preventDefault();
     var par;
     if ((par = parseForm(event)) == false) {
-        alert("Alle Felder müssen ausgefüllt werden!");
+        alert("Please fill in the whole form!");
         return;
     }
     else {
@@ -217,7 +222,7 @@ function newItem(event) {
     event.preventDefault();
     var par;
     if ((par = parseForm(event)) == false) {
-        alert("Alle Felder müssen ausgefüllt werden!");
+        alert("Please fill in the whole form!");
         return;
     }
     else {
@@ -245,7 +250,7 @@ function submitNewPolicy(event) {
     event.preventDefault();
     var par;
     if ((par = parseForm(event)) == false) {
-        alert("Alle Felder müssen ausgefüllt werden!");
+        alert("Please fill in the whole form!");
         return;
     }
     else {
@@ -258,16 +263,15 @@ function submitNewPolicy(event) {
         }
         console.log(par);
         web3.eth.estimateGas(contract.newPolicy.call(par["name"],
-            par["category"], par["maxTimeFrame"],
-            par["lendingFee"], par["minLendingFee"], par["depositAmount"],
-            par["overdueTickMoneyRate"], par["overdueTickTimeRate"],
+            par["category"], par["maxTimeFrame"], par["lendingFee"],
+            par["minLendingFee"], par["depositAmount"], par["overdueFee"],
             par["maxOverdue"], par["relendingAllowed"]), estGas => {
-                contract.newPolicy(par["name"],
-                    par["category"], par["maxTimeFrame"],
-                    par["lendingFee"], par["minLendingFee"], par["depositAmount"],
-                    par["overdueTickMoneyRate"], par["overdueTickTimeRate"],
-                    par["maxOverdue"], par["relendingAllowed"],
-                    {from: web3.eth.accounts[0], gas: estGas}).then(result => {
+                contract.newPolicy(par["name"], par["category"],
+                    par["maxTimeFrame"], par["lendingFee"],
+                    par["minLendingFee"], par["depositAmount"],
+                    par["overdueFee"], par["maxOverdue"],
+                    par["relendingAllowed"], {from: web3.eth.accounts[0], gas: estGas})
+                    .then(result => {
                         console.log(result);
                         refreshContract();
                         $("#newPolicy :submit").prop("disabled", false);
@@ -279,7 +283,7 @@ function submitNewLendRequest(event) {
     event.preventDefault();
     var par;
     if ((par = parseForm(event)) == false) {
-        alert("Alle Felder müssen ausgefüllt werden!");
+        alert("Please fill in the whole form!");
         return;
     }
     else {
@@ -287,19 +291,34 @@ function submitNewLendRequest(event) {
         console.log(par);
         var res = db.exec("select rowid from items where name = '" + par["item"] + "'");
         var itemId = res[0]["values"][0][0]
-        web3.eth.estimateGas(contract.lendRequest.call(itemId, par["category"], 
-            par["lendDuration"], par["policy"]), estGas => {
-                contract.calcPreLendPayment(par["policy"], par["lendDuration"]).then( amount => {
-                    contract.lendRequest(itemId, par["category"],
-                        par["lendDuration"], par["policy"], {from: web3.eth.accounts[0], gas: estGas,
-                            value: amount.toNumber()}).then(result => {
-                                console.log(result);
-                                refreshContract();
-                                $("#newLendRequest :submit").prop("disabled", false);
-                            });
-                });
+        contract.getPolicy(par["policy"]).then(policyId => {
+            web3.eth.estimateGas(contract.lendRequest.call(itemId, par["category"], 
+                par["lendDuration"], policyId), estGas => {
+                    contract.calcPreLendPayment(policyId, par["lendDuration"]).then( amount => {
+                        contract.lendRequest(itemId, par["category"],
+                            par["lendDuration"], policyId, {from: web3.eth.accounts[0], gas: estGas,
+                                value: amount.toNumber()}).then(result => {
+                                    console.log(result);
+                                    refreshContract();
+                                    $("#newLendRequest :submit").prop("disabled", false);
+                                });
+                    });
+            });
         });
     }
+}
+
+function declineLend() {
+    console.log("lendId: " + this.lendId);
+    $("#" + this.buttonId).prop("disabled", true);
+    web3.eth.estimateGas(contract.lendDecline.call(this.lendId), estGas => {
+        estGas = parseInt(estGas * 1.25);
+        console.log(estGas);
+        contract.lendDecline(this.lendId, {from: web3.eth.accounts[0], gas: estGas}).then(result =>{
+            console.log(result);
+            refreshContract();
+        });
+    });
 }
 
 function confirmLend() {
@@ -307,6 +326,7 @@ function confirmLend() {
     $("#" + this.buttonId).prop("disabled", true);
     web3.eth.estimateGas(contract.lendConfirm.call(this.lendId), estGas => {
         estGas = parseInt(estGas * 1.25);
+        console.log(estGas);
         contract.lendConfirm(this.lendId, {from: web3.eth.accounts[0], gas: estGas}).then(result =>{
             console.log(result);
             refreshContract();

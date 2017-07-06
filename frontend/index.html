@@ -10,54 +10,56 @@
     <div class="container">
         <h1><i>&fnof;</i>lending - A decentralized lending app</h1>
         <ul class="nav nav-tabs">
-            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#borrow">Leihen</a>
+            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#borrow">Borrow</a>
             </li>
-            <li class="nav-item hidden"><a class="nav-link" data-toggle="tab" href="#lend">Verleihen</a>
+            <li class="nav-item hidden"><a class="nav-link" data-toggle="tab" href="#lend">Lend</a>
             </li>
-            <li class="nav-item hidden"><a class="nav-link" data-toggle="tab" href="#manage">Verwalten</a>
+            <li class="nav-item hidden"><a class="nav-link" data-toggle="tab" href="#manage">Manage</a>
             </li>
         </ul>
         <div class="tab-content">
             <div class="tab-pane active" id="borrow">
                 <div class="container">
-                    <h2>Neue Leihanfrage</h2>
+                    <h2>New lend request</h2>
                 <form id="newLendRequest">
                         <div class="form-group">
-                        <label for="newRequestSelect">Kategorie:</label>
+                        <label for="newRequestSelect">Category:</label>
                         <select class="form-control" name="category" id="newRequestSelect">
-                            <option style="display:none">... Lädt ...</option>
+                            <option style="display:none">... loading ...</option>
                         </select>
                         </div>
                         <div class="form-group">
                         <label for="itemSelect">Item:</label>
                         <select class="form-control" name="item" id="itemSelect">
-                            <option style="display:none">... Lädt ...</option>
+                            <option style="display:none">... loading ...</option>
                         </select>
                         </div>
                         <div class="form-group">
                         <label for="policySelect">Policy:</label>
                         <select class="form-control" name="policy" id="policySelect">
-                            <option style="display:none">... Lädt ...</option>
+                            <option style="display:none">... loading ...</option>
                         </select>
                         </div>
                         <div class="form-group">
-                        <label for="lendDuration">Dauer:</label>
+                        <label for="lendDuration">Duration:</label>
                         <input type="number" class="form-control" id="lendDuration" name="lendDuration" min="0">
                         </div>
-                        <button type="submit" class="btn btn-primary" disabled>Absenden</button>
+                        <button type="submit" class="btn btn-primary" disabled>Submit</button>
                 </form>
                     <div class="container">
-                        <h2>Leihanfragen</h2>
+                        <h2>Lend requests</h2>
                         <table class="table table-hover">
                             <thead>
                                 <tr>
+                                    <th>Name</th>
                                     <th>Policy</th>
-                                    <th>Leihende</th>
-                                    <th>Bestätigt</th>
+                                    <th>Lend end</th>
+                                    <th>Confirmed</th>
                                 </tr>
                             </thead>
                             <tbody id="lendTableBorrow">
                                 <tr>
+                                    <td>-</td>
                                     <td>-</td>
                                     <td>-</td>
                                     <td>-</td>
@@ -71,20 +73,18 @@
                             <thead>
                                 <tr>
                                     <th>Name</th>
-                                    <th>Kategorie</th>
-                                    <th>Maximale Leihdauer</th>
-                                    <th>Leihgebühr/s</th>
-                                    <th>Minimale Leihgebühr</th>
-                                    <th>Pfand</th>
-                                    <th>Überziehungsgebührrate (Geld)</th>
-                                    <th>Überziehungsgebührrate (Zeit)</th>
-                                    <th>Maximale Überziehungsgebühr</th>
-                                    <th>Weiterverleihen erlaubt</th>
+                                    <th>Category</th>
+                                    <th>Maximum lend duration</th>
+                                    <th>Lending fee/s</th>
+                                    <th>Minimal lending fee</th>
+                                    <th>Deposit</th>
+                                    <th>Overdue fee/s</th>
+                                    <th>Maximum overdue fee</th>
+                                    <th>Relending allowed</th>
                                 </tr>
                             </thead>
                             <tbody id="policyTableBorrow">
                                 <tr>
-                                    <td>-</td>
                                     <td>-</td>
                                     <td>-</td>
                                     <td>-</td>
@@ -102,64 +102,60 @@
             </div>
             <div class="tab-pane" id="lend">
                 <div class="container">
-                    <h2>Neue Policy</h2>
+                    <h2>New Policy</h2>
                     <form id="newPolicy">
                             <div class="form-group">
-                            <label for="name">Name der neuen Policy:</label>
+                            <label for="name">Name of the new policy:</label>
                             <input type="text" class="form-control" id="name" name="name" placeholder="Name">
                             </div>
                             <div class="form-group">
-                            <label for="category">Kategorie:</label>
+                            <label for="category">Category:</label>
                             <select class="form-control" name="category" id="newPolicySelect">
-                                <option style="display:none">... Lädt ...</option>
+                                <option style="display:none">... loading ...</option>
                             </select>
                             </div>
                             <div class="form-group">
-                            <label for="maxTimeFrame">Maximaler Zeitraum:</label>
+                            <label for="maxTimeFrame">Maximum lend duration:</label>
                             <input type="number" class="form-control" id="maxTimeFrame" name="maxTimeFrame" min="0">
                             </div>
                             <div class="form-group">
-                            <label for="lendingFee">Leihgebühr/s:</label>
+                            <label for="lendingFee">Lending fee/s:</label>
                             <input type="number" class="form-control" id="lendingFee" name="lendingFee" min="0">
                             </div>
                             <div class="form-group">
-                            <label for="lendingFee">Minimale Leihgebühr:</label>
+                            <label for="lendingFee">Minimale lending fee:</label>
                             <input type="number" class="form-control" id="minLendingFee" name="minLendingFee" min="0">
                             </div>
                             <div class="form-group">
-                            <label for="depositAmount">Pfand:</label>
+                            <label for="depositAmount">Deposit:</label>
                             <input type="number" class="form-control" id="depositAmount" name="depositAmount" min="0">
                             </div>
                             <div class="form-group">
-                            <label for="overdueTickMoneyRate">Überziehungsgebührrate (Geld):</label>
-                            <input type="number" class="form-control" id="overdueTickMoneyRate" name="overdueTickMoneyRate" min="0">
+                            <label for="overdueTickMoneyRate">Overdue fee/s:</label>
+                            <input type="number" class="form-control" id="overdueFee" name="overdueFee" min="0">
                             </div>
                             <div class="form-group">
-                            <label for="overdueTickTimeRate">Überziehungsgebührrate (Zeit):</label>
-                            <input type="number" class="form-control" id="overdueTickTimeRate" name="overdueTickTimeRate" min="0">
-                            </div>
-                            <div class="form-group">
-                            <label for="maxOverdue">Maximale Überziehungsgebühr:</label>
+                            <label for="maxOverdue">Maximum overdue fee:</label>
                             <input type="number" class="form-control" id="maxOverdue" name="maxOverdue" min="0">
                             </div>
                             <div class="form-check">
                                 <label class="form-check-label">
                                 <input type="checkbox" class="form-check-input" id="relendingAllowed" name="relendingAllowed">
-                                Weiterverleihen erlaubt
+                                Relending allowed
                                 </label>
                             </div>
-                            <button type="submit" class="btn btn-primary" disabled>Absenden</button>
+                            <button type="submit" class="btn btn-primary" disabled>Submit</button>
                     </form>
                 </div>
                 <div class="container">
-                    <h2>Unbestätigte Leihanfragen</h2>
+                    <h2>Unconfirmed lend requests</h2>
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>Name</th>
                                 <th>Policy</th>
-                                <th>Leihender</th>
-                                <th>Leihende</th>
+                                <th>Lender</th>
+                                <th>Lend end</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -169,20 +165,21 @@
                                     <td>-</td>
                                     <td>-</td>
                                     <td>-</td>
-                                <td><button class="btn btn-primary" disabled>Bestätigen</button></td>
+                                <td><button class="btn btn-success" disabled>Confirm</button></td>
+                                <td><button class="btn btn-danger" disabled>Decline</button></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
                 <div class="container">
-                    <h2>Bestätigte Leihanfragen</h2>
+                    <h2>Confirmed lend requests</h2>
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>Name</th>
                                 <th>Policy</th>
-                                <th>Leihender</th>
-                                <th>Leihende</th>
+                                <th>Lender</th>
+                                <th>Lend end</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -192,7 +189,7 @@
                                     <td>-</td>
                                     <td>-</td>
                                     <td>-</td>
-                                <td><button class="btn btn-primary" disabled>Zurückerhalten</button></td>
+                                <td><button class="btn btn-primary" disabled>Received back</button></td>
                             </tr>
                         </tbody>
                     </table>
@@ -203,20 +200,18 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Kategorie</th>
-                                <th>Maximale Leihdauer</th>
-                                <th>Leihgebühr/s</th>
-                                <th>Minimale Leihgebühr</th>
-                                <th>Pfand</th>
-                                <th>Überziehungsgebührrate (Geld)</th>
-                                <th>Überziehungsgebührrate (Zeit)</th>
-                                <th>Maximale Überziehungsgebühr</th>
-                                <th>Weiterverleihen erlaubt</th>
+                                <th>Category</th>
+                                <th>Maximum lend duration</th>
+                                <th>Lending fee/s</th>
+                                <th>Minimal lending fee</th>
+                                <th>Deposit</th>
+                                <th>Overdue fee/s</th>
+                                <th>Maximum overdue fee</th>
+                                <th>Relending allowed</th>
                             </tr>
                         </thead>
                         <tbody id="policyTableLend">
                                 <tr>
-                                    <td>-</td>
                                     <td>-</td>
                                     <td>-</td>
                                     <td>-</td>
@@ -233,12 +228,12 @@
             </div>
             <div class="tab-pane" id="manage">
                 <div class="container">
-                    <h2>Kategorien verwalten</h2>
+                    <h2>Manage categories</h2>
                     <table class="table table-hover">
                         <thead>
                             <tr>
                                 <th>Id</th>
-                                <th>Kategorie</th>
+                                <th>Category</th>
                             </tr>
                         </thead>
                         <tbody id="categories">
@@ -249,17 +244,17 @@
                         </tbody>
                     </table>
                     <form class="form-inline" id="newCategory">
-                        <input type="text" class="form-control" name="name" placeholder="Neue Kategorie">
-                        <button type="submit" class="btn btn-primary">Hinzufügen</button>
+                        <input type="text" class="form-control" name="name" placeholder="New category">
+                        <button type="submit" class="btn btn-primary">Add</button>
                     </form>
                 </div>
                 <div class="container">
-                    <h2>Gegenstände verwalten</h2>
+                    <h2>Manage items</h2>
                     <table class="table table-hover">
                         <thead>
                             <tr>
                                 <th>Id</th>
-                                <th>Kategorie</th>
+                                <th>Category</th>
                                 <th>Name</th>
                             </tr>
                         </thead>
@@ -273,13 +268,13 @@
                     </table>
                     <form class="form-inline" id="newItem">
                         <select class="form-control" name="category" id="newItemSelect">
-                            <option style="display:none">... Lädt ...</option>
+                            <option style="display:none">... loading ...</option>
                         </select>
-                        <input type="text" class="form-control" name="name" placeholder="Neuer Gegenstand">
-                        <button type="submit" class="btn btn-primary">Hinzufügen</button>
+                        <input type="text" class="form-control" name="name" placeholder="New item">
+                        <button type="submit" class="btn btn-primary">Add</button>
                     </form>
                 </div>
-                <button class="btn btn-primary" id="saveDb" disabled>Speichern</button>
+                <button class="btn btn-primary" id="saveDb" disabled>Save</button>
             </div>
         </div>
     </div>
