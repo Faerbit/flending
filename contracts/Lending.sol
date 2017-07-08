@@ -147,7 +147,7 @@ contract Lending {
         require(lendRequestId < lendItems.length);
         if (policies[lendItems[lendRequestId].policyId].relendingAllowed) {
             if (lendItems[lendRequestId].lender ==
-                lendItems[lendRequestId].nextLender) {
+                lendItems[lendRequestId].nextLender || msg.sender == owner) {
                 firstLendConfirm(lendRequestId);
             }
             else {
@@ -187,7 +187,7 @@ contract Lending {
         require(lendRequestId < lendItems.length);
         if (policies[lendItems[lendRequestId].policyId].relendingAllowed) {
             if (lendItems[lendRequestId].lender == 
-                lendItems[lendRequestId].nextLender) {
+                lendItems[lendRequestId].nextLender || msg.sender == owner) {
                 firstLendDecline(lendRequestId);
             }
             else {
