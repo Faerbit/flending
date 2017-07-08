@@ -18,6 +18,7 @@ read -s -p "Enter Password. It will be stored in $DATADIR/my-password: " MYPASSW
 echo
 BZZKEY=$(geth --datadir $DATADIR --password $DATADIR/my-password account new | awk -F"{|}" '{print $2}')
 SEC=$(geth --datadir $DATADIR --password $DATADIR/my-password account new | awk -F"{|}" '{print $2}')
+THRD=$(geth --datadir $DATADIR --password $DATADIR/my-password account new | awk -F"{|}" '{print $2}')
 cat <<EOF > $DATADIR/genesis.json
 {
     "config": {
@@ -34,14 +35,16 @@ cat <<EOF > $DATADIR/genesis.json
     "gasLimit": "0x8000000",
     "alloc": {
         "$BZZKEY": {"balance": "10000000000000000000" }, 
-        "$SEC": {"balance": "10000000000000000000" }
+        "$SEC": {"balance": "10000000000000000000" },
+        "$THRD": {"balance": "10000000000000000000" }
     }
 }
 EOF
 geth init --datadir $DATADIR $DATADIR/genesis.json
 
 echo "Your account is ready: "$BZZKEY
-echo "Your seconds account is ready: "$SEC
+echo "Your second account is ready: "$SEC
+echo "Your third account is ready: "$THRD
 # Run geth in the background
 nohup geth --datadir $DATADIR \
     --password <(cat $DATADIR/my-password) \
@@ -80,8 +83,8 @@ mist \
     --node-maxpeers 0
 
 echo "Cleaning..."
-kill -9 $(ps aux | grep swarm | grep bzzaccount | awk '{print $2}')
-kill -9 $(ps aux | grep geth | grep datadir | awk '{print $2}')
+kill  $(ps aux | grep swarm | grep bzzaccount | awk '{print $2}')
+kill  $(ps aux | grep geth | grep datadir | awk '{print $2}')
 rm -rf /tmp/BZZ
 
 # Cleaning up
