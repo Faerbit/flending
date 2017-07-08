@@ -62,7 +62,7 @@ contract Lending {
                 return i;
             }
         }
-        // throw if not found
+        // revert if not found
         revert();
     }
 
@@ -119,12 +119,19 @@ contract Lending {
         lendItems[lendRequestId].confirmed = true;
     }
 
+    function removeLend(uint lendRequestId) internal {
+        lendItems[lendRequestId] = lendItems[lendItems.length - 1];
+        lendItems.length--;
+    }
+
     function lendDecline(uint lendRequestId) {
         require(msg.sender == owner);
         require(lendItems[lendRequestId].confirmed == false);
-        lendItems[lendRequestId].lender.transfer(calcPreLendPayment(
+        uint payback = calcPreLendPayment(
             lendItems[lendRequestId].policyId,
-            lendItems[lendRequestId].timeFrame));
+            lendItems[lendRequestId].timeFrame);
+        lendItems[lendRequestId].lender.transfer(payback);
+        removeLend(lendRequestId);
     }
 
     function lendComplete(uint lendRequestId) {
@@ -134,8 +141,7 @@ contract Lending {
         if (payback > 0) {
             lendItems[lendRequestId].lender.transfer(uint(payback));
         }
-        lendItems[lendRequestId] = lendItems[lendItems.length - 1];
-        lendItems.length--;
+        removeLend(lendRequestId);
     }
 
     // swarm address to current item sqlite db file
