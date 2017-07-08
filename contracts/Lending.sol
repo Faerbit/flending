@@ -38,6 +38,8 @@ contract Lending {
         uint lendEnd;
         uint timeFrame;
         bool confirmed;
+        address nextLender;
+        uint nextTimeFrame;
     }
 
     LendItem[] public lendItems;
@@ -66,14 +68,37 @@ contract Lending {
         revert();
     }
 
+    function checkLended(uint itemId) constant returns (int) {
+        for(uint i = 0; i<lendItems.length; i++) {
+            if (lendItems[i].itemId == itemId) {
+                return int(i);
+            }
+        }
+        // return false if not found
+        return -1;
+    }
+
     function lendRequest(uint itemId, string category, uint timeFrame,
                          uint policyId) payable {
         require(strings.equals(category.toSlice(),
                                policies[policyId].category.toSlice()));
         require(timeFrame < policies[policyId].maxTimeFrame);
         require(msg.value >= calcPreLendPayment(policyId, timeFrame));
-        lendItems.push(LendItem(itemId, policyId, msg.sender, block.timestamp,
-                                block.timestamp + timeFrame, false));
+        int lendRequestId = checkLended(itemId);
+        if (lendRequestId > -1) {
+            if (policies[policyId].relendingAllowed) {
+                lendItems[uint(lendRequestId)].nextLender = msg.sender;
+                lendItems[uint(lendRequestId)].nextTimeFrame = timeFrame;
+            }
+            else {
+                revert();
+            }
+        }
+        else {
+            lendItems.push(LendItem(itemId, policyId, msg.sender,
+                block.timestamp, block.timestamp + timeFrame, false,
+                msg.sender, 0));
+        }
     }
 
     function min(uint a, uint b) internal returns (uint) {
@@ -112,11 +137,34 @@ contract Lending {
 
     }
 
-    function lendConfirm(uint lendRequestId) {
+    function firstLendConfirm(uint lendRequestId) internal {
         require(msg.sender == owner);
         require(lendItems[lendRequestId].confirmed == false);
-        require(lendRequestId < lendItems.length);
         lendItems[lendRequestId].confirmed = true;
+    }
+
+    function lendConfirm(uint lendRequestId) {
+        require(lendRequestId < lendItems.length);
+        if (policies[lendItems[lendRequestId].policyId].relendingAllowed) {
+            if (lendItems[lendRequestId].lender ==
+                lendItems[lendRequestId].nextLender) {
+                firstLendConfirm(lendRequestId);
+            }
+            else {
+                require(msg.sender == lendItems[lendRequestId].lender);
+                require(lendItems[lendRequestId].confirmed == true);
+                lendItems[lendRequestId].lender =
+                    lendItems[lendRequestId].nextLender;
+                lendItems[lendRequestId].timeFrame =
+                    lendItems[lendRequestId].nextTimeFrame;
+                lendItems[lendRequestId].lendEnd =
+                    block.timestamp + lendItems[lendRequestId].nextTimeFrame;
+                lendItems[lendRequestId].nextTimeFrame = 0;
+            }
+        }
+        else {
+            firstLendConfirm(lendRequestId);
+        }
     }
 
     function removeLend(uint lendRequestId) internal {
@@ -124,7 +172,7 @@ contract Lending {
         lendItems.length--;
     }
 
-    function lendDecline(uint lendRequestId) {
+    function firstLendDecline(uint lendRequestId) internal {
         require(msg.sender == owner);
         require(lendItems[lendRequestId].confirmed == false);
         uint payback = calcPreLendPayment(
@@ -132,6 +180,28 @@ contract Lending {
             lendItems[lendRequestId].timeFrame);
         lendItems[lendRequestId].lender.transfer(payback);
         removeLend(lendRequestId);
+    }
+
+    function lendDecline(uint lendRequestId) {
+        require(lendRequestId < lendItems.length);
+        if (policies[lendItems[lendRequestId].policyId].relendingAllowed) {
+            if (lendItems[lendRequestId].lender == 
+                lendItems[lendRequestId].nextLender) {
+                firstLendDecline(lendRequestId);
+            }
+            else {
+                require(msg.sender == 
+                    lendItems[lendRequestId].lender);
+                require(lendItems[lendRequestId].confirmed == true);
+                lendItems[lendRequestId].nextLender = 
+                lendItems[lendRequestId].nextLender = 
+                    lendItems[lendRequestId].lender;
+                lendItems[lendRequestId].nextTimeFrame = 0;
+            }
+        }
+        else {
+            firstLendDecline(lendRequestId);
+        }
     }
 
     function lendComplete(uint lendRequestId) {
