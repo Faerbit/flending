@@ -178,7 +178,8 @@ contract Lending {
         uint payback = calcPreLendPayment(
             lendItems[lendRequestId].policyId,
             lendItems[lendRequestId].timeFrame);
-        lendItems[lendRequestId].lender.transfer(payback);
+        // deactivated because it's buggy
+        //lendItems[lendRequestId].lender.transfer(payback);
         removeLend(lendRequestId);
     }
 
@@ -193,6 +194,11 @@ contract Lending {
                 require(msg.sender == 
                     lendItems[lendRequestId].lender);
                 require(lendItems[lendRequestId].confirmed == true);
+                uint payback = calcPreLendPayment(
+                    lendItems[lendRequestId].policyId,
+                    lendItems[lendRequestId].nextTimeFrame);
+                // deactivated because it's buggy
+                //lendItems[lendRequestId].nextLender.transfer(payback);
                 lendItems[lendRequestId].nextLender = 
                 lendItems[lendRequestId].nextLender = 
                     lendItems[lendRequestId].lender;
@@ -209,7 +215,8 @@ contract Lending {
         require(lendRequestId < lendItems.length);
         int payback = calcPostLendPayback(lendRequestId);
         if (payback > 0) {
-            lendItems[lendRequestId].lender.transfer(uint(payback));
+            // deactivated because it's buggy
+            //lendItems[lendRequestId].lender.transfer(uint(payback));
         }
         removeLend(lendRequestId);
     }
