@@ -57,6 +57,8 @@ nohup geth --datadir $DATADIR \
     --minerthreads 1 \
     --rpc \
     --rpccorsdomain "*" \
+    --rpcport 8700 \
+    --port 30700 \
     2>> $DATADIR/geth.log &
 
 echo "geth is running in the background, you can check its logs at "$DATADIR"/geth.log"
@@ -80,7 +82,9 @@ mist \
     --node-networkid 322 \
     --node-rpccorsdomain "*" \
     --node-nodiscover \
-    --node-maxpeers 0
+    --node-maxpeers 0 \
+    --node-rpcport 8700 \
+    --node-port 30700
 
 echo "Cleaning..."
 kill  $(ps aux | grep swarm | grep bzzaccount | awk '{print $2}')
