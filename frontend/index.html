@@ -42,7 +42,20 @@
                         </div>
                         <div class="form-group">
                         <label for="lendDuration">Duration:</label>
-                        <input type="number" class="form-control" id="lendDuration" name="lendDuration" min="0">
+                        <div class="row">
+                        <div class="col">
+                            <input type="number" class="form-control" id="lendDuration" name="lendDuration" min="0" step="any">
+                        </div>
+                        <div class="col-3">
+                            <select class="form-control" name="lendDurationChooser" id="lendDurationChooser">
+                                <option>Seconds</option>
+                                <option>Minutes</option>
+                                <option selected>Hours</option>
+                                <option>Days</option>
+                                <option>Weeks</option>
+                            </select>
+                        </div>
+                        </div>
                         </div>
                         <button type="submit" class="btn btn-primary" disabled>Submit</button>
                 </form>
@@ -119,27 +132,115 @@
                             </div>
                             <div class="form-group">
                             <label for="maxTimeFrame">Maximum lend duration:</label>
-                            <input type="number" class="form-control" id="maxTimeFrame" name="maxTimeFrame" min="0">
+                            <div class="row">
+                            <div class="col">
+                                <input type="number" class="form-control" id="maxTimeFrame" name="maxTimeFrame" min="0" step="any">
+                            </div>
+                            <div class="col-3">
+                                <select class="form-control" name="maxTimeFrameChooser">
+                                    <option>Seconds</option>
+                                    <option>Minutes</option>
+                                    <option selected>Hours</option>
+                                    <option>Days</option>
+                                    <option>Weeks</option>
+                                </select>
+                            </div>
+                            </div>
                             </div>
                             <div class="form-group">
                             <label for="lendingFee">Lending fee/s:</label>
-                            <input type="number" class="form-control" id="lendingFee" name="lendingFee" min="0">
+                            <div class="row">
+                            <div class="col">
+                                <input type="number" class="form-control" id="lendingFee" name="lendingFee" min="0" step="any">
+                            </div>
+                            <div class="col-3">
+                                <select class="form-control" name="lendingFeeChooser">
+                                    <option>wei</option>
+                                    <option>babbage (Kwei)</option>
+                                    <option>lovelace (Mwei)</option>
+                                    <option>shannon (Gwei)</option>
+                                    <option>szabo (microether)</option>
+                                    <option selected>finney (milliether)</option>
+                                    <option>ether</option>
+                                </select>
+                            </div>
+                            </div>
                             </div>
                             <div class="form-group">
                             <label for="lendingFee">Minimale lending fee:</label>
-                            <input type="number" class="form-control" id="minLendingFee" name="minLendingFee" min="0">
+                            <div class="row">
+                            <div class="col">
+                                <input type="number" class="form-control" id="minLendingFee" name="minLendingFee" min="0" step="any">
+                            </div>
+                            <div class="col-3">
+                                <select class="form-control" name="minLendingFeeChooser">
+                                    <option>wei</option>
+                                    <option>babbage (Kwei)</option>
+                                    <option>lovelace (Mwei)</option>
+                                    <option>shannon (Gwei)</option>
+                                    <option>szabo (microether)</option>
+                                    <option selected>finney (milliether)</option>
+                                    <option>ether</option>
+                                </select>
+                            </div>
+                            </div>
                             </div>
                             <div class="form-group">
                             <label for="depositAmount">Deposit:</label>
-                            <input type="number" class="form-control" id="depositAmount" name="depositAmount" min="0">
+                            <div class="row">
+                            <div class="col">
+                                <input type="number" class="form-control" id="depositAmount" name="depositAmount" min="0" step="any">
+                            </div>
+                            <div class="col-3">
+                                <select class="form-control" name="depositAmountChooser">
+                                    <option>wei</option>
+                                    <option>babbage (Kwei)</option>
+                                    <option>lovelace (Mwei)</option>
+                                    <option>shannon (Gwei)</option>
+                                    <option>szabo (microether)</option>
+                                    <option selected>finney (milliether)</option>
+                                    <option>ether</option>
+                                </select>
+                            </div>
+                            </div>
                             </div>
                             <div class="form-group">
-                            <label for="overdueTickMoneyRate">Overdue fee/s:</label>
-                            <input type="number" class="form-control" id="overdueFee" name="overdueFee" min="0">
+                            <label for="overdueFee">Overdue fee/s:</label>
+                            <div class="row">
+                            <div class="col">
+                                <input type="number" class="form-control" id="overdueFee" name="overdueFee" min="0" step="any">
+                            </div>
+                            <div class="col-3">
+                                <select class="form-control" name="overdueFeeChooser">
+                                    <option>wei</option>
+                                    <option>babbage (Kwei)</option>
+                                    <option>lovelace (Mwei)</option>
+                                    <option>shannon (Gwei)</option>
+                                    <option>szabo (microether)</option>
+                                    <option selected>finney (milliether)</option>
+                                    <option>ether</option>
+                                </select>
+                            </div>
+                            </div>
                             </div>
                             <div class="form-group">
                             <label for="maxOverdue">Maximum overdue fee:</label>
-                            <input type="number" class="form-control" id="maxOverdue" name="maxOverdue" min="0">
+                            <div class="row">
+                            <div class="col">
+                                <input type="number" class="form-control" id="maxOverdue" name="maxOverdue" min="0" step="any">
+                            </div>
+                            <div class="col-3">
+                                <select class="form-control" name="maxOverdueChooser">
+                                    <option>wei</option>
+                                    <option>babbage (Kwei)</option>
+                                    <option>lovelace (Mwei)</option>
+                                    <option>shannon (Gwei)</option>
+                                    <option>szabo (microether)</option>
+                                    <option selected>finney (milliether)</option>
+                                    <option>ether</option>
+                                </select>
+                            </div>
+                            </div>
                             </div>
                             <div class="form-check">
                                 <label class="form-check-label">

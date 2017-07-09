@@ -96,7 +96,7 @@ contract Lending {
         }
         else {
             lendItems.push(LendItem(itemId, policyId, msg.sender,
-                block.timestamp, block.timestamp + timeFrame, false,
+                block.timestamp + timeFrame, block.timestamp, false,
                 msg.sender, 0));
         }
     }

@@ -3,6 +3,31 @@
 var db;
 var contract;
 
+function getConversionFactor(option) {
+    var c = {
+        "Seconds": 1,
+        "Minutes": 60,
+        "Hours": 60*60,
+        "Days": 60*60*24,
+        "Weeks": 60*60*24*7,
+        "wei": 1,
+        "babbage": 1e3,
+        "lovelace": 1e6,
+        "shannon": 1e9,
+        "szabo": 1e12,
+        "finney": 1e15,
+        "ether": 1e18
+    }
+    var ret = 0;
+    $.each(c, function(key, value) {
+        if (option.includes(key)) {
+            ret = c[key];
+            return;
+        }
+    });
+    return ret;
+}
+
 function parseForm(event) {
     var par = {};
     $.each($(event.target).serializeArray(), function(_, kv) {
@@ -14,6 +39,15 @@ function parseForm(event) {
             return (valid = false);
         }
     });
+    console.log("Pre conversion: ");
+    console.log(par);
+    $.each(par, function(key, value) {
+        if (key.includes("Chooser")){
+            par[key.substring(0, key.length-7)] *= getConversionFactor(value);
+        }
+    });
+    console.log("Post conversion: ");
+    console.log(par);
     if (valid) {
         return par;
     }
@@ -45,7 +79,7 @@ function processItem(lendId) {
                     $("#lendTableBorrow").append("<tr>");
                     $("#lendTableBorrow").append("<td>" + name + "</td>");
                     $("#lendTableBorrow").append("<td>" + policy[0] + "</td>");
-                    $("#lendTableBorrow").append("<td>" + item[3] + "</td>");
+                    $("#lendTableBorrow").append("<td>" + new Date(item[3]*1000).toLocaleString() + "</td>");
                     if (item[5]) {
                         if(item[2] == web3.eth.accounts[0]) {
                             $("#lendTableBorrow").append("<td>Yes</td>");
@@ -75,7 +109,7 @@ function processItem(lendId) {
                 $("#lendTableUnconfirmed").append("<td>" + name + "</td>");
                 $("#lendTableUnconfirmed").append("<td>" + policy[0] + "</td>");
                 $("#lendTableUnconfirmed").append("<td>" + item[2] + "</td>");
-                $("#lendTableUnconfirmed").append("<td>" + item[3] + "</td>");
+                $("#lendTableUnconfirmed").append("<td>" + new Date(item[3]*1000).toLocaleString() + "</td>");
                 var buttonIdConfirm = "confirmLend" + lendId;
                 var buttonIdDecline = "declineLend" + lendId;
                 $("#lendTableUnconfirmed").append("<td><button class=\"btn btn-success\" id=\"" + buttonIdConfirm + "\" >Confirm</button></td>");
@@ -91,7 +125,7 @@ function processItem(lendId) {
                 $("#lendTableConfirmed").append("<td>" + name + "</td>");
                 $("#lendTableConfirmed").append("<td>" + policy[0] + "</td>");
                 $("#lendTableConfirmed").append("<td>" + item[2] + "</td>");
-                $("#lendTableConfirmed").append("<td>" + item[3] + "</td>");
+                $("#lendTableConfirmed").append("<td>" + new Date(item[3]*1000).toLocaleString() + "</td>");
                 var buttonId = "complete" + lendId;
                 $("#lendTableConfirmed").append("<td><button class=\"btn btn-primary\" id=\"" + buttonId + "\" >Received back</button></td>");
                 $("#lendTableConfirmed").append("</tr>");
@@ -227,7 +261,12 @@ function updateLendForm(category) {
 function updateMaxTimeFrame(policyName) {
     contract.getPolicy(policyName).then(policyId => {
         contract.policies.call(policyId.toNumber()).then(policy => {
-            $("#lendDuration").attr({"max" : policy[2].toNumber()});
+            var context = { "dur": policy[2].toNumber()};
+            $("#lendDuration").attr({"max" : context["dur"]/getConversionFactor($("#lendDurationChooser").val())});
+            $("#lendDurationChooser").off("change");
+            $("#lendDurationChooser").change(function() {
+                $("#lendDuration").attr({"max" : this.dur/getConversionFactor($("#lendDurationChooser").val())});
+            }.bind(context));
         });
     });
 }
