@@ -1,6 +1,5 @@
 "use strict";
 
-var globalWeb3;
 var db;
 var contract;
 var account;
@@ -306,7 +305,7 @@ function saveDb(event) {
     const swarm = require("swarm-js").at("http://localhost:8500");
     swarm.upload(new Buffer(db.export())).then(hash => {
         console.log(hash);
-        globalWeb3.eth.estimateGas(contract.setCurrentDb.call(hash), function(error, estGas) {
+        web3.eth.estimateGas(contract.setCurrentDb.call(hash), function(error, estGas) {
             if (error) {
                 console.error(error);
                 return;
@@ -335,7 +334,7 @@ function submitNewPolicy(event) {
             par["relendingAllowed"] = false;
         }
         console.log(par);
-        globalWeb3.eth.estimateGas(contract.newPolicy.call(par["name"],
+        web3.eth.estimateGas(contract.newPolicy.call(par["name"],
             par["category"], par["maxTimeFrame"], par["lendingFee"],
             par["minLendingFee"], par["depositAmount"], par["overdueFee"],
             par["maxOverdue"], par["relendingAllowed"]), function(error, estGas) {
@@ -369,7 +368,7 @@ function submitNewLendRequest(event) {
         var res = db.exec("select rowid from items where name = '" + par["item"] + "'");
         var itemId = res[0]["values"][0][0]
         contract.getPolicy(par["policy"]).then(policyId => {
-            globalWeb3.eth.estimateGas(contract.lendRequest.call(itemId, par["category"], 
+            web3.eth.estimateGas(contract.lendRequest.call(itemId, par["category"], 
                 par["lendDuration"], policyId), function(error, estGas) {
                     if (error) {
                         console.error(error);
@@ -392,7 +391,7 @@ function submitNewLendRequest(event) {
 function declineLend() {
     console.log("lendId: " + this.lendId);
     $("#" + this.buttonId).prop("disabled", true);
-    globalWeb3.eth.estimateGas(contract.lendDecline.call(this.lendId), function(error, estGas) {
+    web3.eth.estimateGas(contract.lendDecline.call(this.lendId), function(error, estGas) {
         if (error) {
             console.error(error);
             return;
@@ -409,7 +408,7 @@ function declineLend() {
 function confirmLend() {
     console.log("lendId: " + this.lendId);
     $("#" + this.buttonId).prop("disabled", true);
-    globalWeb3.eth.estimateGas(contract.lendConfirm.call(this.lendId), function(error, estGas) {
+    web3.eth.estimateGas(contract.lendConfirm.call(this.lendId), function(error, estGas) {
         if (error) {
             console.error(error);
             return;
@@ -426,7 +425,7 @@ function confirmLend() {
 function completeLend() {
     console.log("lendId: " + this.lendId);
     $("#" + this.buttonId).prop("disabled", true);
-    globalWeb3.eth.estimateGas(contract.lendComplete.call(this.lendId), function(error, estGas) {
+    web3.eth.estimateGas(contract.lendComplete.call(this.lendId), function(error, estGas) {
         if (error) {
             console.error(error);
             return;
@@ -478,15 +477,15 @@ function init(dbAddress) {
 
 $(document).ready(function() {
     var Web3 = require("web3");
-    if(typeof web3 !== 'undefined') {
-        var web3 = new Web3(web3.currentProvider);
+    if(typeof window.web3 !== 'undefined') {
+        console.log("Using current web3");
+        var web3 = new Web3(window.web3.currentProvider);
     }
     else {
+        console.log("Using localhost web3");
         web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8700"));
     }
-    globalWeb3 = web3;
     console.log(web3);
-    console.log(globalWeb3);
     var contractJson = require("../build/contracts/Lending.json");
     var Contract = require("truffle-contract");
     var Lending = Contract(contractJson);
