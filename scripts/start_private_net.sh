@@ -67,7 +67,7 @@ echo "geth is running in the background, you can check its logs at "$DATADIR"/ge
 swarm \
     --bzzaccount $BZZKEY \
     --datadir $DATADIR \
-    --ethapi $DATADIR/geth.ipc \
+    --ens-api $DATADIR/geth.ipc \
     --verbosity 6 \
     --maxpeers 0 \
     --bzznetworkid 322 \
