@@ -138,7 +138,7 @@ function processItem(lendId) {
 }
 function refreshContract() {
     contract.policiesLength().then(length => {
-        if (length.toNumber() > 0) {
+        if (length.toNumber() == 0) {
             $("#policyTableLend").html("");
             $("#policyTableBorrow").html("");
         }
@@ -180,7 +180,7 @@ function refreshContract() {
         }
     });
     contract.lendItemsLength().then(length => {
-        if (length.toNumber() > 0) {
+        if (length.toNumber() == 0) {
             $("#lendTableBorrow").html("");
             $("#lendTableUnconfirmed").html("");
             $("#lendTableConfirmed").html("");
@@ -402,7 +402,7 @@ function declineLend() {
             console.log(result);
             refreshContract();
         });
-    });
+    }.bind(this));
 }
 
 function confirmLend() {
@@ -419,7 +419,7 @@ function confirmLend() {
             console.log(result);
             refreshContract();
         });
-    });
+    }.bind(this));
 }
 
 function completeLend() {
@@ -435,7 +435,7 @@ function completeLend() {
             console.log(result);
             refreshContract();
         });
-    });
+    }.bind(this));
 }
 
 function init(dbAddress) {
@@ -449,6 +449,7 @@ function init(dbAddress) {
             db = new sql.Database(buffer);
             console.log(db);
             refreshLocal();
+            refreshContract();
         },
         error => {
             console.error(error);
@@ -472,7 +473,6 @@ function init(dbAddress) {
     $("#policySelect").change(updateMaxTimeFrame);
     $("#newLendRequest").submit(submitNewLendRequest);
     $("#newLendRequest :submit").prop("disabled", false);
-    refreshContract();
 }
 
 $(document).ready(function() {
