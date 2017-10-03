@@ -71,6 +71,7 @@ swarm \
     --verbosity 6 \
     --maxpeers 0 \
     --bzznetworkid 322 \
+    --port 8500 \
     &> $DATADIR/swarm.log < <(cat $DATADIR/my-password) &
 
 
