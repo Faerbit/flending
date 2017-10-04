@@ -73,8 +73,10 @@ function processItem(lendId) {
         console.log(item[2] == item[6]);
         console.log("timeFrame: ");
         console.log(item[4]);
-        console.log("next timeFrame: ");
+        console.log("next lendEnd: ");
         console.log(item[7]);
+        console.log("next timeFrame: ");
+        console.log(item[8]);
         console.log("status: ");
         console.log(item[5]);
         contract.policies.call(item[1]).then(policy => {
@@ -103,7 +105,9 @@ function processItem(lendId) {
                         var context = { lendId : lendId, buttonId: buttonIdDecline };
                         $("#" + buttonIdDecline).on("click", declineLend.bind(context));
                     }
-                    if(item[2] == account && item[5].toNumber() == 1) {
+                    if(item[5].toNumber() == 1 &&
+                        ((item[2] == item[6] && item[2] == account)
+                          || (item[2] != item[6] && item[6] == account))) {
                         $("#lendTableBorrow").append("<td></td>");
                         var buttonIdConfirm = "confirmLend" + lendId;
                         $("#lendTableBorrow").append("<td><button class=\"btn btn-primary\" id=\"" + buttonIdConfirm + "\" >Confirm</button></td>");

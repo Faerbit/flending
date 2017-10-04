@@ -41,6 +41,7 @@ contract Lending {
         uint timeFrame;
         LendStatus status;
         address nextLender;
+        uint nextLendEnd;
         uint nextTimeFrame;
     }
 
@@ -90,6 +91,7 @@ contract Lending {
         if (lendRequestId > -1) {
             if (policies[policyId].relendingAllowed) {
                 lendItems[uint(lendRequestId)].nextLender = msg.sender;
+                lendItems[uint(lendRequestId)].nextLendEnd = block.timestamp + timeFrame;
                 lendItems[uint(lendRequestId)].nextTimeFrame = timeFrame;
                 lendItems[uint(lendRequestId)].status = LendStatus.Requested;
             }
@@ -100,7 +102,7 @@ contract Lending {
         else {
             lendItems.push(LendItem(itemId, policyId, msg.sender,
                 block.timestamp + timeFrame, block.timestamp, LendStatus.Requested,
-                msg.sender, 0));
+                msg.sender, 0, 0));
         }
     }
 
@@ -156,13 +158,6 @@ contract Lending {
             else {
                 require(msg.sender == lendItems[lendRequestId].lender);
                 require(lendItems[lendRequestId].status == LendStatus.Requested);
-                lendItems[lendRequestId].lender =
-                    lendItems[lendRequestId].nextLender;
-                lendItems[lendRequestId].timeFrame =
-                    lendItems[lendRequestId].nextTimeFrame;
-                lendItems[lendRequestId].lendEnd =
-                    block.timestamp + lendItems[lendRequestId].nextTimeFrame;
-                lendItems[lendRequestId].nextTimeFrame = 0;
                 lendItems[lendRequestId].status = LendStatus.Accepted;
             }
         }
@@ -173,11 +168,28 @@ contract Lending {
 
     function lendConfirm(uint lendRequestId) {
         require(lendRequestId < lendItems.length);
-        if (lendItems[lendRequestId].status == LendStatus.Accepted) {
+        require(lendItems[lendRequestId].status == LendStatus.Accepted);
+        if (lendItems[lendRequestId].lender !=
+                    lendItems[lendRequestId].nextLender) {
+            require(msg.sender == lendItems[lendRequestId].nextLender);
+            int payback = calcPostLendPayback(lendRequestId);
+            if (payback > 0) {
+                // deactivated because it's buggy
+                //lendItems[lendRequestId].lender.transfer(uint(payback));
+            }
+            lendItems[lendRequestId].lender =
+                lendItems[lendRequestId].nextLender;
+            lendItems[lendRequestId].timeFrame =
+                lendItems[lendRequestId].nextTimeFrame;
+            lendItems[lendRequestId].lendEnd =
+                lendItems[lendRequestId].nextLendEnd;
+            lendItems[lendRequestId].nextLendEnd = 0;
+            lendItems[lendRequestId].nextTimeFrame = 0;
             lendItems[lendRequestId].status = LendStatus.Confirmed;
         }
         else {
-            revert();
+            require(msg.sender == lendItems[lendRequestId].lender);
+            lendItems[lendRequestId].status = LendStatus.Confirmed;
         }
     }
 
