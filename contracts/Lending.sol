@@ -30,6 +30,8 @@ contract Lending {
     function policiesLength() constant returns (uint) {
         return policies.length;
     }
+
+    enum LendStatus { Requested, Accepted, Confirmed }
    
     struct LendItem {
         uint itemId;
@@ -37,7 +39,7 @@ contract Lending {
         address lender;
         uint lendEnd;
         uint timeFrame;
-        bool confirmed;
+        LendStatus status;
         address nextLender;
         uint nextTimeFrame;
     }
@@ -89,6 +91,7 @@ contract Lending {
             if (policies[policyId].relendingAllowed) {
                 lendItems[uint(lendRequestId)].nextLender = msg.sender;
                 lendItems[uint(lendRequestId)].nextTimeFrame = timeFrame;
+                lendItems[uint(lendRequestId)].status = LendStatus.Requested;
             }
             else {
                 revert();
@@ -96,7 +99,7 @@ contract Lending {
         }
         else {
             lendItems.push(LendItem(itemId, policyId, msg.sender,
-                block.timestamp + timeFrame, block.timestamp, false,
+                block.timestamp + timeFrame, block.timestamp, LendStatus.Requested,
                 msg.sender, 0));
         }
     }
@@ -137,22 +140,22 @@ contract Lending {
 
     }
 
-    function firstLendConfirm(uint lendRequestId) internal {
+    function firstLendAccept(uint lendRequestId) internal {
         require(msg.sender == owner);
-        require(lendItems[lendRequestId].confirmed == false);
-        lendItems[lendRequestId].confirmed = true;
+        require(lendItems[lendRequestId].status == LendStatus.Requested);
+        lendItems[lendRequestId].status = LendStatus.Accepted;
     }
 
-    function lendConfirm(uint lendRequestId) {
+    function lendAccept(uint lendRequestId) {
         require(lendRequestId < lendItems.length);
         if (policies[lendItems[lendRequestId].policyId].relendingAllowed) {
             if (lendItems[lendRequestId].lender ==
-                lendItems[lendRequestId].nextLender || msg.sender == owner) {
-                firstLendConfirm(lendRequestId);
+                lendItems[lendRequestId].nextLender && msg.sender == owner) {
+                firstLendAccept(lendRequestId);
             }
             else {
                 require(msg.sender == lendItems[lendRequestId].lender);
-                require(lendItems[lendRequestId].confirmed == true);
+                require(lendItems[lendRequestId].status == LendStatus.Requested);
                 lendItems[lendRequestId].lender =
                     lendItems[lendRequestId].nextLender;
                 lendItems[lendRequestId].timeFrame =
@@ -160,10 +163,21 @@ contract Lending {
                 lendItems[lendRequestId].lendEnd =
                     block.timestamp + lendItems[lendRequestId].nextTimeFrame;
                 lendItems[lendRequestId].nextTimeFrame = 0;
+                lendItems[lendRequestId].status = LendStatus.Accepted;
             }
         }
         else {
-            firstLendConfirm(lendRequestId);
+            firstLendAccept(lendRequestId);
+        }
+    }
+
+    function lendConfirm(uint lendRequestId) {
+        require(lendRequestId < lendItems.length);
+        if (lendItems[lendRequestId].status == LendStatus.Accepted) {
+            lendItems[lendRequestId].status = LendStatus.Confirmed;
+        }
+        else {
+            revert();
         }
     }
 
@@ -174,7 +188,7 @@ contract Lending {
 
     function firstLendDecline(uint lendRequestId) internal {
         require(msg.sender == owner);
-        require(lendItems[lendRequestId].confirmed == false);
+        require(lendItems[lendRequestId].status == LendStatus.Requested);
         uint payback = calcPreLendPayment(
             lendItems[lendRequestId].policyId,
             lendItems[lendRequestId].timeFrame);
@@ -187,22 +201,22 @@ contract Lending {
         require(lendRequestId < lendItems.length);
         if (policies[lendItems[lendRequestId].policyId].relendingAllowed) {
             if (lendItems[lendRequestId].lender == 
-                lendItems[lendRequestId].nextLender || msg.sender == owner) {
+                lendItems[lendRequestId].nextLender && msg.sender == owner) {
                 firstLendDecline(lendRequestId);
             }
             else {
                 require(msg.sender == 
                     lendItems[lendRequestId].lender);
-                require(lendItems[lendRequestId].confirmed == true);
+                require(lendItems[lendRequestId].status == LendStatus.Requested);
                 uint payback = calcPreLendPayment(
                     lendItems[lendRequestId].policyId,
                     lendItems[lendRequestId].nextTimeFrame);
                 // deactivated because it's buggy
                 //lendItems[lendRequestId].nextLender.transfer(payback);
                 lendItems[lendRequestId].nextLender = 
-                lendItems[lendRequestId].nextLender = 
                     lendItems[lendRequestId].lender;
                 lendItems[lendRequestId].nextTimeFrame = 0;
+                lendItems[lendRequestId].status = LendStatus.Confirmed;
             }
         }
         else {

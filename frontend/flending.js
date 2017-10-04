@@ -75,51 +75,66 @@ function processItem(lendId) {
         console.log(item[4]);
         console.log("next timeFrame: ");
         console.log(item[7]);
+        console.log("status: ");
+        console.log(item[5]);
         contract.policies.call(item[1]).then(policy => {
             if (item[2] == account || item[6] == account) {
                     $("#lendTableBorrow").append("<tr>");
                     $("#lendTableBorrow").append("<td>" + name + "</td>");
                     $("#lendTableBorrow").append("<td>" + policy[0] + "</td>");
                     $("#lendTableBorrow").append("<td>" + new Date(item[3]*1000).toLocaleString() + "</td>");
-                    if (item[5]) {
-                        if(item[2] == account) {
-                            $("#lendTableBorrow").append("<td>Yes</td>");
-                        }
-                        else {
-                            $("#lendTableBorrow").append("<td>No</td>");
-                        }
+                    if (item[5].toNumber() == 0) {
+                        $("#lendTableBorrow").append("<td>Requested</td>");
                     }
-                    else {
-                        $("#lendTableBorrow").append("<td>No</td>");
+                    else if (item[5].toNumber() == 1) {
+                        $("#lendTableBorrow").append("<td>Accepted</td>");
                     }
-                    if(item[2] != item[6] && item[2] == account) {
+                    else if (item[5].toNumber() == 2) {
+                        $("#lendTableBorrow").append("<td>Confirmed</td>");
+                    }
+                    if(item[2] != item[6] && item[2] == account && item[5].toNumber() == 0) {
                         $("#lendTableBorrow").append("<td>" + item[6] + "</td>");
-                        var buttonIdConfirm = "confirmBorrow" + lendId;
+                        var buttonIdAccept = "acceptBorrow" + lendId;
                         var buttonIdDecline = "declineBorrow" + lendId;
-                        $("#lendTableBorrow").append("<td><button class=\"btn btn-success\" id=\"" + buttonIdConfirm + "\" >Confirm</button></td>");
+                        $("#lendTableBorrow").append("<td><button class=\"btn btn-success\" id=\"" + buttonIdAccept + "\" >Accept</button></td>");
                         $("#lendTableBorrow").append("<td><button class=\"btn btn-danger\" id=\"" + buttonIdDecline + "\" >Decline</button></td>");
-                        var context = { lendId : lendId, buttonId: buttonIdConfirm };
-                        $("#" + buttonIdConfirm).on("click", confirmLend.bind(context));
+                        var context = { lendId : lendId, buttonId: buttonIdAccept };
+                        $("#" + buttonIdAccept).on("click", acceptLend.bind(context));
                         var context = { lendId : lendId, buttonId: buttonIdDecline };
                         $("#" + buttonIdDecline).on("click", declineLend.bind(context));
                     }
+                    if(item[2] == account && item[5].toNumber() == 1) {
+                        $("#lendTableBorrow").append("<td></td>");
+                        var buttonIdConfirm = "confirmLend" + lendId;
+                        $("#lendTableBorrow").append("<td><button class=\"btn btn-primary\" id=\"" + buttonIdConfirm + "\" >Confirm</button></td>");
+                        var context = { lendId : lendId, buttonId: buttonIdConfirm };
+                        $("#" + buttonIdConfirm).on("click", confirmLend.bind(context));
+                    }
                     $("#lendTableBorrow").append("</tr>");
             }
-            if (!item[5])  {
+            if (item[2] == item[6] && item[5].toNumber() < 2)  {
                 $("#lendTableUnconfirmed").append("<tr>");
                 $("#lendTableUnconfirmed").append("<td>" + name + "</td>");
                 $("#lendTableUnconfirmed").append("<td>" + policy[0] + "</td>");
                 $("#lendTableUnconfirmed").append("<td>" + item[2] + "</td>");
                 $("#lendTableUnconfirmed").append("<td>" + new Date(item[3]*1000).toLocaleString() + "</td>");
-                var buttonIdConfirm = "confirmLend" + lendId;
-                var buttonIdDecline = "declineLend" + lendId;
-                $("#lendTableUnconfirmed").append("<td><button class=\"btn btn-success\" id=\"" + buttonIdConfirm + "\" >Confirm</button></td>");
-                $("#lendTableUnconfirmed").append("<td><button class=\"btn btn-danger\" id=\"" + buttonIdDecline + "\" >Decline</button></td>");
-                $("#lendTableUnconfirmed").append("</tr>");
-                var context = { lendId : lendId, buttonId: buttonIdConfirm };
-                $("#" + buttonIdConfirm).on("click", confirmLend.bind(context));
-                var context = { lendId : lendId, buttonId: buttonIdDecline };
-                $("#" + buttonIdDecline).on("click", declineLend.bind(context));
+                if (item[5].toNumber() == 0) {
+                    $("#lendTableUnconfirmed").append("<td>Requested</td>");
+                }
+                else if (item[5].toNumber() == 1) {
+                    $("#lendTableUnconfirmed").append("<td>Accepted</td>");
+                }
+                if (item[5].toNumber() == 0) {
+                    var buttonIdAccept = "acceptLend" + lendId;
+                    var buttonIdDecline = "declineLend" + lendId;
+                    $("#lendTableUnconfirmed").append("<td><button class=\"btn btn-success\" id=\"" + buttonIdAccept + "\" >Accept</button></td>");
+                    $("#lendTableUnconfirmed").append("<td><button class=\"btn btn-danger\" id=\"" + buttonIdDecline + "\" >Decline</button></td>");
+                    $("#lendTableUnconfirmed").append("</tr>");
+                    var context = { lendId : lendId, buttonId: buttonIdAccept };
+                    $("#" + buttonIdAccept).on("click", acceptLend.bind(context));
+                    var context = { lendId : lendId, buttonId: buttonIdDecline };
+                    $("#" + buttonIdDecline).on("click", declineLend.bind(context));
+                }
             }
             else {
                 $("#lendTableConfirmed").append("<tr>");
@@ -138,7 +153,7 @@ function processItem(lendId) {
 }
 function refreshContract() {
     contract.policiesLength().then(length => {
-        if (length.toNumber() == 0) {
+        if (length.toNumber() > 0) {
             $("#policyTableLend").html("");
             $("#policyTableBorrow").html("");
         }
@@ -180,7 +195,7 @@ function refreshContract() {
         }
     });
     contract.lendItemsLength().then(length => {
-        if (length.toNumber() == 0) {
+        if (length.toNumber() > 0) {
             $("#lendTableBorrow").html("");
             $("#lendTableUnconfirmed").html("");
             $("#lendTableConfirmed").html("");
@@ -399,6 +414,23 @@ function declineLend() {
         estGas = parseInt(estGas * 1.25);
         console.log(estGas);
         contract.lendDecline(this.lendId, {from: account, gas: estGas}).then(result =>{
+            console.log(result);
+            refreshContract();
+        });
+    }.bind(this));
+}
+
+function acceptLend() {
+    console.log("lendId: " + this.lendId);
+    $("#" + this.buttonId).prop("disabled", true);
+    web3.eth.estimateGas(contract.lendAccept.call(this.lendId), function(error, estGas) {
+        if (error) {
+            console.error(error);
+            return;
+        }
+        estGas = parseInt(estGas * 1.25);
+        console.log(estGas);
+        contract.lendAccept(this.lendId, {from: account, gas: estGas}).then(result =>{
             console.log(result);
             refreshContract();
         });
