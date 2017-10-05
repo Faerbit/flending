@@ -89,15 +89,12 @@ contract Lending {
         require(msg.value >= calcPreLendPayment(policyId, timeFrame));
         int lendRequestId = checkLended(itemId);
         if (lendRequestId > -1) {
-            if (policies[policyId].relendingAllowed) {
-                lendItems[uint(lendRequestId)].nextLender = msg.sender;
-                lendItems[uint(lendRequestId)].nextLendEnd = block.timestamp + timeFrame;
-                lendItems[uint(lendRequestId)].nextTimeFrame = timeFrame;
-                lendItems[uint(lendRequestId)].status = LendStatus.Requested;
-            }
-            else {
-                revert();
-            }
+            require(policies[policyId].relendingAllowed);
+            require(lendItems[uint(lendRequestId)].status == LendStatus.Confirmed);
+            lendItems[uint(lendRequestId)].nextLender = msg.sender;
+            lendItems[uint(lendRequestId)].nextLendEnd = block.timestamp + timeFrame;
+            lendItems[uint(lendRequestId)].nextTimeFrame = timeFrame;
+            lendItems[uint(lendRequestId)].status = LendStatus.Requested;
         }
         else {
             lendItems.push(LendItem(itemId, policyId, msg.sender,
