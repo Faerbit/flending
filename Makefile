@@ -17,11 +17,3 @@ reset:
 	cp frontend/flending.css build/out
 	browserify frontend/flending.js -o build/out/flending-compiled.js
 	swarm --recursive up build/out
-
-testrpc.pid:
-	{ testrpc & echo $$! > $@; }
-
-
-test: testrpc.pid
-	truffle test || true
-	kill `cat $<` && rm $<
