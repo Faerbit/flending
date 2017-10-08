@@ -8,6 +8,7 @@ items and associated fees.
 * npm
 * Mist v0.8.10
 * geth v1.7.1
+
 Please run `npm install` to install all node dependencies.
 This code is incompatible to Mist version 0.9.x or newer.
 
