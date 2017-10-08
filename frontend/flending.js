@@ -11,13 +11,13 @@ function getConversionFactor(option) {
         "Hours": 60*60,
         "Days": 60*60*24,
         "Weeks": 60*60*24*7,
-        "wei": 1,
-        "babbage": 1e3,
-        "lovelace": 1e6,
-        "shannon": 1e9,
-        "szabo": 1e12,
-        "finney": 1e15,
-        "ether": 1e18
+        "Wei": 1,
+        "Babbage": 1e3,
+        "Lovelace": 1e6,
+        "Shannon": 1e9,
+        "Szabo": 1e12,
+        "Finney": 1e15,
+        "Ether": 1e18
     }
     var ret = 0;
     $.each(c, function(key, value) {
