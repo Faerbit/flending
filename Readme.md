@@ -9,7 +9,7 @@ items and associated fees.
 # Start private blockchain (leave it running in the background)
 ./scripts/start_private_net.sh
 
-# Deploying smart contract and uploading frontend to swarm
+# Deploying smart contract and upload frontend to swarm
 make
 ```
 
